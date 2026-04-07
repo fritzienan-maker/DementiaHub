@@ -466,31 +466,66 @@ function renderDashboard(user) {
   const journalKey = `dh_journal_${user.id}`;
   const journalEntries = JSON.parse(localStorage.getItem(journalKey) || "[]");
   const moodDefs = [
-    { key: "overwhelmed", emoji: "😟", label: "Overwhelmed", color: "#f43f5e", ring: "#fecdd3" },
-    { key: "tired",       emoji: "😔", label: "Tired",       color: "#8b5cf6", ring: "#ede9fe" },
-    { key: "okay",        emoji: "😐", label: "Okay",        color: "#94a3b8", ring: "#e2e8f0" },
-    { key: "hopeful",     emoji: "🙂", label: "Hopeful",     color: "#006D77", ring: "#ccfbf1" },
-    { key: "good",        emoji: "😊", label: "Good",        color: "#16a34a", ring: "#dcfce7" },
+    {
+      key: "overwhelmed",
+      emoji: "😟",
+      label: "Overwhelmed",
+      color: "#f43f5e",
+      ring: "#fecdd3",
+    },
+    {
+      key: "tired",
+      emoji: "😔",
+      label: "Tired",
+      color: "#8b5cf6",
+      ring: "#ede9fe",
+    },
+    {
+      key: "okay",
+      emoji: "😐",
+      label: "Okay",
+      color: "#94a3b8",
+      ring: "#e2e8f0",
+    },
+    {
+      key: "hopeful",
+      emoji: "🙂",
+      label: "Hopeful",
+      color: "#006D77",
+      ring: "#ccfbf1",
+    },
+    {
+      key: "good",
+      emoji: "😊",
+      label: "Good",
+      color: "#16a34a",
+      ring: "#dcfce7",
+    },
   ];
   const patientName = user.patientName || "your loved one";
 
-  const moodButtons = moodDefs.map(m => {
-    const active = S.journalMood === m.key;
-    return `
+  const moodButtons = moodDefs
+    .map((m) => {
+      const active = S.journalMood === m.key;
+      return `
       <button onclick="setJournalMood('${m.key}')" class="flex flex-col items-center gap-1.5 focus:outline-none">
         <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-150"
-          style="border: 2px solid ${active ? m.color : '#e2e8f0'};
-                 background: ${active ? m.ring : 'transparent'};
-                 transform: ${active ? 'scale(1.12)' : 'scale(1)'};">
+          style="border: 2px solid ${active ? m.color : "#e2e8f0"};
+                 background: ${active ? m.ring : "transparent"};
+                 transform: ${active ? "scale(1.12)" : "scale(1)"};">
           ${m.emoji}
         </div>
-        <span class="text-[10px] font-bold transition-colors" style="color:${active ? m.color : '#94a3b8'};">${m.label}</span>
+        <span class="text-[10px] font-bold transition-colors" style="color:${active ? m.color : "#94a3b8"};">${m.label}</span>
       </button>`;
-  }).join("");
+    })
+    .join("");
 
-  const recentEntries = journalEntries.slice(-5).reverse().map(e => {
-    const md = moodDefs.find(m => m.key === e.mood) || moodDefs[2];
-    return `
+  const recentEntries = journalEntries
+    .slice(-5)
+    .reverse()
+    .map((e) => {
+      const md = moodDefs.find((m) => m.key === e.mood) || moodDefs[2];
+      return `
       <div class="flex items-start gap-3 py-3 border-t border-slate-100">
         <div class="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0"
           style="background:${md.ring};">${md.emoji}</div>
@@ -502,7 +537,8 @@ function renderDashboard(user) {
           ${e.note ? `<p class="text-xs text-slate-500 leading-relaxed line-clamp-2">${esc(e.note)}</p>` : `<p class="text-xs text-slate-300 italic">No note added.</p>`}
         </div>
       </div>`;
-  }).join("");
+    })
+    .join("");
 
   const journalHtml = `
     <div class="dh-card">
@@ -515,11 +551,15 @@ function renderDashboard(user) {
       <button onclick="saveJournalEntry('${user.id}')" id="journalSaveBtn" class="dh-btn-primary w-full"
         style="background:linear-gradient(135deg,#006D77,#003D44);">Save my check-in</button>
       <div id="journalSaveResult" class="mt-2 text-xs text-center font-semibold text-teal-600 hidden">✓ Check-in saved</div>
-      ${journalEntries.length ? `
+      ${
+        journalEntries.length
+          ? `
         <div class="mt-2">
           <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0">Recent Check-ins</p>
           ${recentEntries}
-        </div>` : ""}
+        </div>`
+          : ""
+      }
     </div>`;
 
   // ── 💬 Conversation History ───────────────────────────────
@@ -586,7 +626,12 @@ function saveJournalEntry(userId) {
   const note = noteEl ? noteEl.value.trim() : "";
   const key = `dh_journal_${userId}`;
   const entries = JSON.parse(localStorage.getItem(key) || "[]");
-  entries.push({ id: Date.now().toString(), mood: S.journalMood, note, date: new Date().toISOString() });
+  entries.push({
+    id: Date.now().toString(),
+    mood: S.journalMood,
+    note,
+    date: new Date().toISOString(),
+  });
   localStorage.setItem(key, JSON.stringify(entries));
   S.journalMood = "okay";
   render();
@@ -912,7 +957,7 @@ function copyToClipboard(text) {
     .catch(() => alert("Failed to copy"));
 }
 
-window.setResourceTab = function(tab) {
+window.setResourceTab = function (tab) {
   resourceTab = tab;
   localStorage.setItem("dh_resource_tab", tab);
   render();
@@ -1144,10 +1189,16 @@ function renderResources() {
     },
   ];
 
-  let html = `<div class="mb-6"><h1 class="text-2xl font-black text-slate-900 mb-1">📚 Resources & Support</h1><p class="text-slate-600 text-sm font-medium">Quick access to guides, helplines, and care services.</p></div>`;
+  let html = `<div class="mb-3">
+    <h1 class="text-xl font-black text-slate-900 mb-0.5">📚 Resources & Support</h1>
+    <p class="text-slate-600 text-xs font-medium mb-2">Quick access to helplines, guides & services.</p>
+    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 mb-3">
+      <p class="text-xs text-slate-700"><strong>💡 Tip:</strong> Quick Help = emergencies | CARA = app | DementiaHub = guides | Services = programs</p>
+    </div>
+  </div>`;
 
   // ── EMERGENCY HELPLINES SECTION (prominent, user-friendly) ──
-  html += `<div class="mb-6"><div class="mb-3"><h2 class="text-lg font-black text-slate-900 mb-1">🆘 Need Help Right Now?</h2><p class="text-slate-600 text-xs font-medium">Call immediately for urgent support.</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-2">`;
+  html += `<div class="mb-4"><div class="mb-2"><h2 class="text-base font-black text-slate-900 mb-0">🆘 Emergency Numbers</h2></div><div class="grid grid-cols-2 md:grid-cols-4 gap-1.5">`;
 
   emergency.forEach((item) => {
     const colorMap = {
@@ -1186,169 +1237,225 @@ function renderResources() {
     };
     const colors = colorMap[item.color];
     html += `
-      <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
-        <div class="flex items-start justify-between mb-3">
-          <span class="text-3xl ${colors.icon}">${item.icon}</span>
-          <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.priority === "critical" ? "🚨 Critical" : item.priority === "high" ? "⚡ High Priority" : "📞 Regular"}</span>
-        </div>
-        <h3 class="font-black text-slate-800 mb-1 text-sm">${item.name}</h3>
-        <p class="text-slate-500 text-xs font-medium mb-3">${item.text}</p>
-        <div class="bg-white rounded-lg p-3 mb-3 border ${colors.border}">
-          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Phone Number</p>
-          <p class="font-black ${colors.phone} text-2xl leading-none mb-2">${item.phone}</p>
-          <p class="text-[10px] text-slate-500 font-semibold">Hours: ${item.hours}</p>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold ${colors.phone} group-hover:underline">📞 Tap to Call →</span>
-          <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.phone)}')" title="Copy number" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
-        </div>
+      <div class="dh-card ${colors.border} border transition-all ${colors.hover} cursor-pointer group p-2 rounded-lg text-center flex flex-col items-center" onclick="openResourceLink('${esc(item.link)}')">
+        <div class="text-xl mb-0.5">${item.icon}</div>
+        <p class="text-[10px] font-black text-slate-900 mb-1">${item.name}</p>
+        <p class="font-black ${colors.phone} text-xs leading-none mb-1">${item.phone}</p>
+        <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.phone)}')" class="text-[8px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold transition w-full">📋 Copy</button>
       </div>`;
   });
   html += `</div></div>`; // End emergency helplines
 
   // ── COLOR SCHEMES FOR SECTIONS ──
   const colorSchemes = {
-    purple: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
-    blue: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
-    orange: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
-    emerald: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
-    cyan: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
+    purple: {
+      bg: "bg-white",
+      border: "border-slate-200",
+      icon: "text-slate-400",
+      link: "text-teal-600",
+      tag: "bg-slate-100 text-slate-600",
+      hover: "hover:shadow-md",
+      accent: "text-slate-900",
+    },
+    blue: {
+      bg: "bg-white",
+      border: "border-slate-200",
+      icon: "text-slate-400",
+      link: "text-teal-600",
+      tag: "bg-slate-100 text-slate-600",
+      hover: "hover:shadow-md",
+      accent: "text-slate-900",
+    },
+    orange: {
+      bg: "bg-white",
+      border: "border-slate-200",
+      icon: "text-slate-400",
+      link: "text-teal-600",
+      tag: "bg-slate-100 text-slate-600",
+      hover: "hover:shadow-md",
+      accent: "text-slate-900",
+    },
+    emerald: {
+      bg: "bg-white",
+      border: "border-slate-200",
+      icon: "text-slate-400",
+      link: "text-teal-600",
+      tag: "bg-slate-100 text-slate-600",
+      hover: "hover:shadow-md",
+      accent: "text-slate-900",
+    },
+    cyan: {
+      bg: "bg-white",
+      border: "border-slate-200",
+      icon: "text-slate-400",
+      link: "text-teal-600",
+      tag: "bg-slate-100 text-slate-600",
+      hover: "hover:shadow-md",
+      accent: "text-slate-900",
+    },
   };
 
-  // ── TAB NAVIGATION ──
+  // ── TAB NAVIGATION (Card-Based System) ──
   html += `<div class="mb-4">
-    <div class="flex flex-wrap gap-2 mb-4 pb-3 border-b border-slate-200">
-      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'emergency' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('emergency')">🆘 Quick Help</button>
-      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'cara' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('cara')">📱 CARA</button>
-      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'dementiahub' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('dementiahub')">📚 DementiaHub</button>
-      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'dementiasgt' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('dementiasgt')">🏥 Services</button>
+    <p class="text-slate-600 text-xs font-medium mb-2">Select what you need:</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+      <button class="p-2.5 rounded-lg border-2 transition-all text-left ${resourceTab === "emergency" ? "border-teal-600 bg-slate-50 shadow-md" : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"}" onclick="setResourceTab('emergency')">
+        <div class="text-xl mb-1">🆘</div>
+        <h3 class="font-black text-slate-900 text-xs mb-0.5">Quick Help</h3>
+        <p class="text-slate-600 text-[11px] font-medium">Emergency & urgent</p>
+      </button>
+      <button class="p-2.5 rounded-lg border-2 transition-all text-left ${resourceTab === "cara" ? "border-teal-600 bg-slate-50 shadow-md" : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"}" onclick="setResourceTab('cara')">
+        <div class="text-xl mb-1">📱</div>
+        <h3 class="font-black text-slate-900 text-xs mb-0.5">CARA</h3>
+        <p class="text-slate-600 text-[11px] font-medium">Community app</p>
+      </button>
+      <button class="p-2.5 rounded-lg border-2 transition-all text-left ${resourceTab === "dementiahub" ? "border-teal-600 bg-slate-50 shadow-md" : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"}" onclick="setResourceTab('dementiahub')">
+        <div class="text-xl mb-1">📚</div>
+        <h3 class="font-black text-slate-900 text-xs mb-0.5">DementiaHub</h3>
+        <p class="text-slate-600 text-[11px] font-medium">Guides & advice</p>
+      </button>
+      <button class="p-2.5 rounded-lg border-2 transition-all text-left ${resourceTab === "dementiasgt" ? "border-teal-600 bg-slate-50 shadow-md" : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"}" onclick="setResourceTab('dementiasgt')">
+        <div class="text-xl mb-1">🏥</div>
+        <h3 class="font-black text-slate-900 text-xs mb-0.5">Services</h3>
+        <p class="text-slate-600 text-[11px] font-medium">Care programs</p>
+      </button>
     </div>
   </div>`;
 
   // ── TAB CONTENT ──
-  if (resourceTab === 'emergency') {
+  if (resourceTab === "emergency") {
     // Quick Help Tab - Critical resources for immediate needs
-    html += sections.slice(0, 3).map(sec => {
-      const colors = colorSchemes[sec.color] || colorSchemes.purple;
-      return `<div class="mb-4">
-        <div class="mb-3 pb-2 border-b border-slate-200">
-          <h2 class="text-base font-black text-slate-900 mb-0.5">${sec.title}</h2>
+    html += sections
+      .slice(0, 3)
+      .map((sec) => {
+        const colors = colorSchemes[sec.color] || colorSchemes.purple;
+        return `<div class="mb-3">
+        <div class="mb-2 pb-1.5 border-b border-slate-200">
+          <h2 class="text-sm font-black text-slate-900 mb-0.5">${sec.title}</h2>
           <p class="text-slate-600 text-xs font-medium">${sec.desc}</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          ${sec.items.map(item => {
-            const urlDisplay = item.link.replace('https://', '').replace('http://', '').split('/')[0];
-            return `
+          ${sec.items
+            .map((item) => {
+              const urlDisplay = item.link
+                .replace("https://", "")
+                .replace("http://", "")
+                .split("/")[0];
+              return `
             <div class="bg-white border-l-4 ${colors.border} p-3 rounded-lg transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
-              <div class="flex items-start justify-between mb-2">
-                <h3 class="font-black text-slate-900 text-sm">${item.name}</h3>
-                <span class="text-xl">${item.icon}</span>
+              <div class="flex items-start justify-between mb-1">
+                <h3 class="font-black text-slate-900 text-xs">${item.name}</h3>
+                <span class="text-lg">${item.icon}</span>
               </div>
-              <p class="text-slate-600 text-xs mb-2">${item.text}</p>
-              <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+              <p class="text-slate-600 text-xs mb-1.5">${item.text}</p>
+              <div class="flex items-center justify-between pt-1.5 border-t border-slate-100">
                 <span class="text-xs text-slate-500 font-semibold">${item.info}</span>
-                <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold transition">Copy</button>
+                <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold transition">Copy</button>
               </div>
             </div>`;
-          }).join('')}
+            })
+            .join("")}
         </div>
       </div>`;
-    }).join('');
-  } 
-  else if (resourceTab === 'cara') {
+      })
+      .join("");
+  } else if (resourceTab === "cara") {
     // CARA Tab - Digital platform features
     html += `
-      <div class="mb-4">
-        <div class="mb-3 pb-2 border-b border-slate-200">
-          <h2 class="text-base font-black text-slate-900 mb-0.5">📱 CARA — Digital Companion</h2>
-          <p class="text-slate-600 text-xs font-medium">Free lifestyle and community platform by Dementia Singapore.</p>
+      <div class="mb-2">
+        <div class="mb-2 pb-1.5 border-b border-slate-200">
+          <h2 class="text-sm font-black text-slate-900 mb-0.5">📱 CARA — Digital Companion</h2>
+          <p class="text-slate-600 text-xs font-medium">Free app by Dementia Singapore.</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div class="bg-white border border-slate-200 p-3 rounded-lg">
-            <h3 class="font-black text-slate-900 text-sm mb-2">🎯 About CARA</h3>
-            <p class="text-slate-600 text-xs mb-3">Easy access to digital solutions and community support for dementia care.</p>
-            <div class="space-y-1">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+          <div class="bg-white border border-slate-200 p-2.5 rounded-lg">
+            <h3 class="font-black text-slate-900 text-xs mb-1.5">🎯 About CARA</h3>
+            <p class="text-slate-600 text-xs mb-2">Easy access to digital solutions and community support.</p>
+            <div class="space-y-0.5">
               <span class="inline-block bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded">✓ Free</span>
               <span class="inline-block bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded ml-1">iOS & Android</span>
             </div>
           </div>
-          <div class="bg-white border border-slate-200 p-3 rounded-lg">
-            <h3 class="font-black text-slate-900 text-sm mb-2">✨ Features</h3>
-            <ul class="text-xs text-slate-600 space-y-1">
+          <div class="bg-white border border-slate-200 p-2.5 rounded-lg">
+            <h3 class="font-black text-slate-900 text-xs mb-1.5">✨ Features</h3>
+            <ul class="text-xs text-slate-600 space-y-0.5">
               <li>🛡️ Safe Return Program</li>
               <li>👥 Community Alerts</li>
               <li>🎁 Partner Rewards</li>
             </ul>
           </div>
         </div>
-        <div class="mt-3 bg-white border border-slate-200 p-3 rounded-lg">
-          <h3 class="font-black text-slate-900 text-sm mb-2">📲 Get CARA Today</h3>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="openResourceLink('https://play.google.com/store/apps/details?id=com.embreo.carasg')" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:shadow-md transition font-bold">Google Play</button>
-            <button onclick="openResourceLink('https://apps.apple.com/sg/app/cara-sg/id1553855834')" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:shadow-md transition font-bold">App Store</button>
-            <button onclick="openResourceLink('https://cara.sg/join-now/')" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:shadow-md transition font-bold">Join Online</button>
+        <div class="mt-2 bg-white border border-slate-200 p-2.5 rounded-lg">
+          <h3 class="font-black text-slate-900 text-xs mb-1.5">📲 Download CARA</h3>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="openResourceLink('https://play.google.com/store/apps/details?id=com.embreo.carasg')" class="text-xs bg-teal-600 text-white px-2.5 py-1 rounded hover:shadow-md transition font-bold">Play Store</button>
+            <button onclick="openResourceLink('https://apps.apple.com/sg/app/cara-sg/id1553855834')" class="text-xs bg-teal-600 text-white px-2.5 py-1 rounded hover:shadow-md transition font-bold">App Store</button>
+            <button onclick="openResourceLink('https://cara.sg/join-now/')" class="text-xs bg-teal-600 text-white px-2.5 py-1 rounded hover:shadow-md transition font-bold">Join Online</button>
           </div>
         </div>
       </div>`;
-  }
-  else if (resourceTab === 'dementiahub') {
+  } else if (resourceTab === "dementiahub") {
     // DementiaHub Tab
     html += `
-      <div class="mb-4">
-        <div class="mb-3 pb-2 border-b border-slate-200">
-          <h2 class="text-base font-black text-slate-900 mb-0.5">📚 DementiaHub — Resource Portal</h2>
+      <div class="mb-2">
+        <div class="mb-2 pb-1.5 border-b border-slate-200">
+          <h2 class="text-sm font-black text-slate-900 mb-0.5">📚 DementiaHub — Resource Portal</h2>
           <p class="text-slate-600 text-xs font-medium">Guides and advice by your role</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/i-live-with-dementia/')">
-            <h3 class="font-black text-slate-900 text-sm mb-1">🧠 Living with Dementia</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+          <div class="bg-white border border-slate-200 p-2.5 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/i-live-with-dementia/')">
+            <h3 class="font-black text-slate-900 text-xs mb-0.5">🧠 Living with Dementia</h3>
             <p class="text-slate-600 text-xs">Resources & support</p>
           </div>
-          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/my-loved-one-has-dementia/')">
-            <h3 class="font-black text-slate-900 text-sm mb-1">❤️ Caregiver Guides</h3>
+          <div class="bg-white border border-slate-200 p-2.5 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/my-loved-one-has-dementia/')">
+            <h3 class="font-black text-slate-900 text-xs mb-0.5">❤️ Caregiver Guides</h3>
             <p class="text-slate-600 text-xs">For family caregivers</p>
           </div>
-          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/general-public/')">
-            <h3 class="font-black text-slate-900 text-sm mb-1">👫 Community</h3>
+          <div class="bg-white border border-slate-200 p-2.5 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/general-public/')">
+            <h3 class="font-black text-slate-900 text-xs mb-0.5">👫 Community</h3>
             <p class="text-slate-600 text-xs">Volunteers & supporters</p>
           </div>
-          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/care-professional/')">
-            <h3 class="font-black text-slate-900 text-sm mb-1">👨‍⚕️ Professionals</h3>
+          <div class="bg-white border border-slate-200 p-2.5 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/care-professional/')">
+            <h3 class="font-black text-slate-900 text-xs mb-0.5">👨‍⚕️ Professionals</h3>
             <p class="text-slate-600 text-xs">Healthcare workers</p>
           </div>
         </div>
       </div>`;
-  }
-  else if (resourceTab === 'dementiasgt') {
+  } else if (resourceTab === "dementiasgt") {
     // Dementia Singapore Services
     html += `
-      <div class="mb-4">
-        <div class="mb-3 pb-2 border-b border-slate-200">
-          <h2 class="text-base font-black text-slate-900 mb-0.5">🏥 Dementia Singapore Services</h2>
+      <div class="mb-2">
+        <div class="mb-2 pb-1.5 border-b border-slate-200">
+          <h2 class="text-sm font-black text-slate-900 mb-0.5">🏥 Dementia Singapore Services</h2>
           <p class="text-slate-600 text-xs font-medium">Community support, care programs & resources</p>
         </div>
       </div>`;
-    
-    html += sections.slice(3).map(sec => {
-      const colors = colorSchemes[sec.color] || colorSchemes.emerald;
-      return `<div class="mb-3">
-        <h3 class="text-sm font-black text-slate-900 mb-2">${sec.title}</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          ${sec.items.map(item => {
-            return `
-            <div class="bg-white border-l-4 ${colors.border} p-3 rounded-lg transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
-              <h4 class="font-black text-slate-900 text-xs mb-1">${item.icon} ${item.name}</h4>
-              <p class="text-slate-600 text-xs mb-2">${item.text}</p>
-              <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Copy</button>
+
+    html += sections
+      .slice(3)
+      .map((sec) => {
+        const colors = colorSchemes[sec.color] || colorSchemes.emerald;
+        return `<div class="mb-2">
+        <h3 class="text-xs font-black text-slate-900 mb-1.5">${sec.title}</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+          ${sec.items
+            .map((item) => {
+              return `
+            <div class="bg-white border-l-4 ${colors.border} p-2.5 rounded-lg transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
+              <h4 class="font-black text-slate-900 text-xs mb-0.5">${item.icon} ${item.name}</h4>
+              <p class="text-slate-600 text-xs mb-1.5">${item.text}</p>
+              <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Copy</button>
             </div>`;
-          }).join('')}
+            })
+            .join("")}
         </div>
       </div>`;
-    }).join('');
+      })
+      .join("");
   }
-  
+
   // ── CRISIS BANNER (shown in all tabs) ──
-  html += `<div class="mt-4 p-4 bg-white rounded-lg border border-slate-200"><div class="flex items-start gap-3"><div class="text-2xl">🆘</div><div class="flex-1"><h3 class="font-black text-slate-900 text-sm mb-1">Life-Threatening or Immediate Crisis?</h3><p class="text-slate-700 text-xs font-semibold mb-3">Call 999 immediately. Every second counts.</p><div class="grid grid-cols-2 gap-2"><div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:shadow-md transition" onclick="openResourceLink('tel:999')"><p class="font-black text-slate-900 mb-0.5">🚑 999</p><p class="text-xs text-slate-500 font-semibold">Ambulance • Police • Fire</p></div><div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:shadow-md transition" onclick="openResourceLink('tel:6377-0700')"><p class="font-black text-slate-900 mb-0.5">📞 6377 0700</p><p class="text-xs text-slate-500 font-semibold">Dementia Helpline</p></div></div></div></div></div>`;
+  html += `<div class="mt-3 p-3 bg-white rounded-lg border border-slate-200"><div class="flex items-start gap-2"><div class="text-xl">🆘</div><div class="flex-1"><h3 class="font-black text-slate-900 text-xs mb-1">Life-Threatening Crisis?</h3><p class="text-slate-700 text-xs font-semibold mb-2">Call 999 immediately.</p><div class="grid grid-cols-2 gap-1.5"><div class="bg-white rounded-lg p-2 border border-slate-200 cursor-pointer hover:shadow-md transition" onclick="openResourceLink('tel:999')"><p class="font-black text-slate-900 text-xs mb-0.5">🚑 999</p><p class="text-xs text-slate-500 font-semibold">Ambulance • Police</p></div><div class="bg-white rounded-lg p-2 border border-slate-200 cursor-pointer hover:shadow-md transition" onclick="openResourceLink('tel:6377-0700')"><p class="font-black text-slate-900 text-xs mb-0.5">📞 6377 0700</p><p class="text-xs text-slate-500 font-semibold">Dementia Helpline</p></div></div></div></div></div>`;
 
   return html;
 }
