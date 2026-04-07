@@ -231,10 +231,34 @@ function timeAgo(iso) {
 // ══════════════════════════════════════════════════════════════
 // RENDER ENTRY
 // ══════════════════════════════════════════════════════════════
+// Mount the ElevenLabs voice widget once — persists across navigations so
+// the web component is never destroyed/recreated (which caused auto-opening).
+function mountVoiceWidget() {
+  if (document.getElementById("dh-voice-widget-root")) return; // already mounted
+  const ctx = DHUserContext.getCaregiverContext();
+  if (!ctx) return;
+  const elVars = JSON.stringify(DHUserContext.buildElevenLabsVars(ctx));
+  const root = document.createElement("div");
+  root.id = "dh-voice-widget-root";
+  // Positioned at the bottom of the left sidebar (265px wide, 18px side padding)
+  root.style.cssText =
+    "position:fixed;bottom:20px;left:18px;width:229px;z-index:200;";
+  root.innerHTML = `<elevenlabs-convai
+    id="dh-el-widget-caregiver"
+    agent-id="${esc(CFG.elevenLabsAgentId)}"
+    dynamic-variables='${elVars}'
+    style="display:block;width:100%;">
+  </elevenlabs-convai>`;
+  document.body.appendChild(root);
+}
+
 function render() {
   const user = getCurrentUser();
   const app = document.getElementById("app");
   if (!user) {
+    // Remove persistent widget when logged out
+    const w = document.getElementById("dh-voice-widget-root");
+    if (w) w.remove();
     const path = location.hash.replace("#", "");
     app.innerHTML = path === "register" ? renderRegister() : renderLogin();
     if (path === "register")
@@ -248,6 +272,7 @@ function render() {
     return;
   }
   app.innerHTML = renderShell(user, getView());
+  mountVoiceWidget();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -375,22 +400,7 @@ function renderShell(user, activeV) {
         <a class="dh-nav-link" style="color:rgba(248,113,113,.8)" onclick="logoutUser()"><span>↩</span><span>Logout</span></a>
       </div>
     </div>
-    <div class="dh-main"><div class="dh-content">${content}</div></div>
-    <!-- Voice AI Widget Container — ElevenLabs widget injected here -->
-    <div id="voice-ai-widget" style="position:fixed;bottom:24px;right:28px;z-index:200;">${(() => {
-      const ctx = DHUserContext.getCaregiverContext();
-      const elVars = ctx
-        ? JSON.stringify(DHUserContext.buildElevenLabsVars(ctx))
-        : "{}";
-      return ctx
-        ? `<elevenlabs-convai
-        id="dh-el-widget-caregiver"
-        agent-id="${esc(CFG.elevenLabsAgentId)}"
-        dynamic-variables='${elVars}'
-        style="display:block;">
-      </elevenlabs-convai>`
-        : "";
-    })()}</div>`;
+    <div class="dh-main"><div class="dh-content">${content}</div></div>`;
 }
 
 // ══════════════════════════════════════════════════════════════
