@@ -4,19 +4,19 @@
 const CFG = {
   // API key is NOT here — it lives in Vercel env vars (GHL_API_KEY).
   // All GHL calls go through /api/ghl via window.DHAPI.
-  locationId:        'Idf9v4q6aqh5KhzXip6e',
-  elevenLabsAgentId: 'YOUR_ELEVENLABS_AGENT_ID', // ← replace with your ElevenLabs Conversational AI agent ID
+  locationId: "Idf9v4q6aqh5KhzXip6e",
+  elevenLabsAgentId: "YOUR_ELEVENLABS_AGENT_ID", // ← replace with your ElevenLabs Conversational AI agent ID
 };
 
 // ══════════════════════════════════════════════════════════════
 // GHL STATE
 // ══════════════════════════════════════════════════════════════
 const S = {
-  opps:       null,   // null=loading, []=empty, [...]=data
-  convos:     null,
-  calendars:  null,
-  filter:     'all',  // all|new|triaged|due_soon|critical|resolved
-  kbViewed:   JSON.parse(localStorage.getItem('dh_kb_viewed') || '[]')
+  opps: null, // null=loading, []=empty, [...]=data
+  convos: null,
+  calendars: null,
+  filter: "all", // all|new|triaged|due_soon|critical|resolved
+  kbViewed: JSON.parse(localStorage.getItem("dh_kb_viewed") || "[]"),
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -26,12 +26,14 @@ const S = {
 async function loadGHLData() {
   try {
     const { opps, convos, calendars } = await DHAPI.loadDashboardData();
-    S.opps      = opps;
-    S.convos    = convos;
+    S.opps = opps;
+    S.convos = convos;
     S.calendars = calendars;
-  } catch(e) {
-    console.error('[loadGHLData]', e.message);
-    S.opps = []; S.convos = []; S.calendars = [];
+  } catch (e) {
+    console.error("[loadGHLData]", e.message);
+    S.opps = [];
+    S.convos = [];
+    S.calendars = [];
   }
   render();
 }
@@ -47,114 +49,183 @@ async function scheduleCallback(calendarId, contactId, startTime, endTime) {
 // ══════════════════════════════════════════════════════════════
 // SAFETY & SLA LOGIC
 // ══════════════════════════════════════════════════════════════
-const CRITICAL_KEYWORDS = ['urgent','critical','emergency','fall','wander','missing','crisis','acute','unsafe','danger','immediate'];
+const CRITICAL_KEYWORDS = [
+  "urgent",
+  "critical",
+  "emergency",
+  "fall",
+  "wander",
+  "missing",
+  "crisis",
+  "acute",
+  "unsafe",
+  "danger",
+  "immediate",
+];
 
 function isCritical(op) {
-  const text = ((op.name || '') + ' ' + (op.pipelineStageName || '')).toLowerCase();
-  return CRITICAL_KEYWORDS.some(k => text.includes(k));
+  const text = (
+    (op.name || "") +
+    " " +
+    (op.pipelineStageName || "")
+  ).toLowerCase();
+  return CRITICAL_KEYWORDS.some((k) => text.includes(k));
 }
 
 function getSLA(op) {
-  const hrs = (Date.now() - new Date(op.updatedAt || op.createdAt).getTime()) / 3600000;
-  if (hrs < 24)  return { label:'On Track', cls:'dh-badge-track', hrs };
-  if (hrs < 48)  return { label:'Due Soon',  cls:'dh-badge-due',   hrs };
-  return             { label:'Overdue',   cls:'dh-badge-needs',  hrs };
+  const hrs =
+    (Date.now() - new Date(op.updatedAt || op.createdAt).getTime()) / 3600000;
+  if (hrs < 24) return { label: "On Track", cls: "dh-badge-track", hrs };
+  if (hrs < 48) return { label: "Due Soon", cls: "dh-badge-due", hrs };
+  return { label: "Overdue", cls: "dh-badge-needs", hrs };
 }
 
 function getSafetyAlerts(opps) {
-  return opps.filter(op => isCritical(op) || getSLA(op).hrs >= 72);
+  return opps.filter((op) => isCritical(op) || getSLA(op).hrs >= 72);
 }
 
 // Normalize GHL opp to display status: 'new' | 'triaged' | 'resolved'
 function getDisplayStatus(op) {
-  const st    = (op.status || '').toLowerCase();
-  const stage = (op.pipelineStageName || '').toLowerCase();
-  if (st === 'won' || st === 'lost') return 'resolved';
-  if (/triage|progress|active|contact|open/i.test(stage)) return 'triaged';
-  return 'new';
+  const st = (op.status || "").toLowerCase();
+  const stage = (op.pipelineStageName || "").toLowerCase();
+  if (st === "won" || st === "lost") return "resolved";
+  if (/triage|progress|active|contact|open/i.test(stage)) return "triaged";
+  return "new";
 }
 
 // Due-soon: high urgency unresolved OR overdue SLA
 function isDueSoon(op) {
-  if (getDisplayStatus(op) === 'resolved') return false;
+  if (getDisplayStatus(op) === "resolved") return false;
   return isCritical(op) || getSLA(op).hrs >= 48;
 }
 
 function getFilteredOpps(opps) {
   switch (S.filter) {
-    case 'new':       return opps.filter(op => getDisplayStatus(op) === 'new');
-    case 'triaged':   return opps.filter(op => getDisplayStatus(op) === 'triaged');
-    case 'due_soon':  return opps.filter(op => isDueSoon(op));
-    case 'critical':  return opps.filter(op => isCritical(op));
-    case 'resolved':  return opps.filter(op => getDisplayStatus(op) === 'resolved');
-    case 'open':      return opps.filter(op => getDisplayStatus(op) !== 'resolved');
-    case 'overdue':   return opps.filter(op => getSLA(op).hrs >= 48);
-    default:          return opps;
+    case "new":
+      return opps.filter((op) => getDisplayStatus(op) === "new");
+    case "triaged":
+      return opps.filter((op) => getDisplayStatus(op) === "triaged");
+    case "due_soon":
+      return opps.filter((op) => isDueSoon(op));
+    case "critical":
+      return opps.filter((op) => isCritical(op));
+    case "resolved":
+      return opps.filter((op) => getDisplayStatus(op) === "resolved");
+    case "open":
+      return opps.filter((op) => getDisplayStatus(op) !== "resolved");
+    case "overdue":
+      return opps.filter((op) => getSLA(op).hrs >= 48);
+    default:
+      return opps;
   }
 }
 
 // ══════════════════════════════════════════════════════════════
 // USER AUTH (localStorage + sessionStorage)
 // ══════════════════════════════════════════════════════════════
-function getUsers()   { return JSON.parse(localStorage.getItem('dh_users') || '[]'); }
-function saveUsers(u) { localStorage.setItem('dh_users', JSON.stringify(u)); }
+function getUsers() {
+  return JSON.parse(localStorage.getItem("dh_users") || "[]");
+}
+function saveUsers(u) {
+  localStorage.setItem("dh_users", JSON.stringify(u));
+}
 function getCurrentUser() {
-  const id = sessionStorage.getItem('dh_cg_uid');
-  return id ? getUsers().find(u => u.id === id) || null : null;
+  const id = sessionStorage.getItem("dh_cg_uid");
+  return id ? getUsers().find((u) => u.id === id) || null : null;
 }
 async function hashPass(p) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  const buf = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(p),
+  );
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 async function registerUser(fullname, email, phone, pass, patientName) {
   const users = getUsers();
-  if (users.find(u => u.email === email)) return { error: 'Email already registered.' };
-  if (pass.length < 8) return { error: 'Password must be at least 8 characters.' };
+  if (users.find((u) => u.email === email))
+    return { error: "Email already registered." };
+  if (pass.length < 8)
+    return { error: "Password must be at least 8 characters." };
   const user = {
     id: Date.now().toString(),
     fullname,
     email,
     phone,
     patientName: patientName || null,
-    role: 'caregiver',
+    role: "caregiver",
     hash: await hashPass(pass),
     joinedAt: new Date().toISOString(),
   };
   users.push(user);
   saveUsers(users);
-  sessionStorage.setItem('dh_cg_uid', user.id);
+  sessionStorage.setItem("dh_cg_uid", user.id);
   // Pre-configure GHL widget with identity for this session
   DHUserContext.configureGHLWidget(DHUserContext.getCaregiverContext());
   return { ok: true, user };
 }
 async function loginUser(email, pass) {
-  const user = getUsers().find(u => u.email === email);
-  if (!user || user.hash !== await hashPass(pass)) return { error: 'Invalid email or password.' };
-  sessionStorage.setItem('dh_cg_uid', user.id);
+  const user = getUsers().find((u) => u.email === email);
+  if (!user || user.hash !== (await hashPass(pass)))
+    return { error: "Invalid email or password." };
+  sessionStorage.setItem("dh_cg_uid", user.id);
   // Pre-configure GHL widget identity for this session
   DHUserContext.configureGHLWidget(DHUserContext.getCaregiverContext());
   return { ok: true, user };
 }
-function logoutUser() { sessionStorage.removeItem('dh_cg_uid'); S.opps=null; S.convos=null; S.calendars=null; location.hash=''; render(); }
+function logoutUser() {
+  sessionStorage.removeItem("dh_cg_uid");
+  S.opps = null;
+  S.convos = null;
+  S.calendars = null;
+  location.hash = "";
+  render();
+}
 
 // ══════════════════════════════════════════════════════════════
 // ROUTING
 // ══════════════════════════════════════════════════════════════
-function getView() { return location.hash.replace('#','') || 'dashboard'; }
-window.addEventListener('hashchange', render);
+function getView() {
+  return location.hash.replace("#", "") || "dashboard";
+}
+window.addEventListener("hashchange", render);
 
 // ══════════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════════
-function esc(v) { return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-SG',{month:'short',day:'numeric',year:'numeric'}) : '—'; }
-function fmtTime(iso) { return iso ? new Date(iso).toLocaleString('en-SG',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
+function esc(v) {
+  return String(v || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function fmtDate(iso) {
+  return iso
+    ? new Date(iso).toLocaleDateString("en-SG", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "—";
+}
+function fmtTime(iso) {
+  return iso
+    ? new Date(iso).toLocaleString("en-SG", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
+}
 function timeAgo(iso) {
-  if (!iso) return '—';
+  if (!iso) return "—";
   const hrs = (Date.now() - new Date(iso).getTime()) / 3600000;
-  if (hrs < 1)  return Math.round(hrs*60) + 'm ago';
-  if (hrs < 24) return Math.round(hrs) + 'h ago';
-  return Math.round(hrs/24) + 'd ago';
+  if (hrs < 1) return Math.round(hrs * 60) + "m ago";
+  if (hrs < 24) return Math.round(hrs) + "h ago";
+  return Math.round(hrs / 24) + "d ago";
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -162,12 +233,18 @@ function timeAgo(iso) {
 // ══════════════════════════════════════════════════════════════
 function render() {
   const user = getCurrentUser();
-  const app  = document.getElementById('app');
+  const app = document.getElementById("app");
   if (!user) {
-    const path = location.hash.replace('#','');
-    app.innerHTML = path === 'register' ? renderRegister() : renderLogin();
-    if (path === 'register') document.getElementById('regForm').addEventListener('submit', handleRegister);
-    else                     document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    const path = location.hash.replace("#", "");
+    app.innerHTML = path === "register" ? renderRegister() : renderLogin();
+    if (path === "register")
+      document
+        .getElementById("regForm")
+        .addEventListener("submit", handleRegister);
+    else
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", handleLogin);
     return;
   }
   app.innerHTML = renderShell(user, getView());
@@ -183,7 +260,7 @@ function renderLogin(msg) {
       <h1 class="text-2xl font-black text-slate-900 mb-1">Welcome Back</h1>
       <p class="text-slate-500 text-sm font-medium">Sign in to your Caregiver Portal</p>
     </div>
-    ${msg ? `<div class="alert-error">${esc(msg)}</div>` : ''}
+    ${msg ? `<div class="alert-error">${esc(msg)}</div>` : ""}
     <form id="loginForm" class="space-y-4">
       <div><label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Email</label>
         <input id="loginEmail" class="dh-input" type="email" required placeholder="your@email.com" autocomplete="email"></div>
@@ -196,9 +273,20 @@ function renderLogin(msg) {
 }
 async function handleLogin(e) {
   e.preventDefault();
-  const res = await loginUser(document.getElementById('loginEmail').value, document.getElementById('loginPass').value);
-  if (res.error) { document.getElementById('app').innerHTML = renderLogin(res.error); document.getElementById('loginForm').addEventListener('submit', handleLogin); }
-  else { location.hash = 'dashboard'; loadGHLData(); render(); }
+  const res = await loginUser(
+    document.getElementById("loginEmail").value,
+    document.getElementById("loginPass").value,
+  );
+  if (res.error) {
+    document.getElementById("app").innerHTML = renderLogin(res.error);
+    document
+      .getElementById("loginForm")
+      .addEventListener("submit", handleLogin);
+  } else {
+    location.hash = "dashboard";
+    loadGHLData();
+    render();
+  }
 }
 
 function renderRegister(msg) {
@@ -208,7 +296,7 @@ function renderRegister(msg) {
       <h1 class="text-2xl font-black text-slate-900 mb-1">Create Account</h1>
       <p class="text-slate-500 text-sm font-medium">Join the DementiaHub Caregiver Network</p>
     </div>
-    ${msg ? `<div class="alert-error">${esc(msg)}</div>` : ''}
+    ${msg ? `<div class="alert-error">${esc(msg)}</div>` : ""}
     <form id="regForm" class="space-y-4">
       <div><label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Full Name</label>
         <input id="regName" class="dh-input" type="text" required placeholder="Jane Smith" autocomplete="name"></div>
@@ -228,30 +316,48 @@ function renderRegister(msg) {
 async function handleRegister(e) {
   e.preventDefault();
   const res = await registerUser(
-    document.getElementById('regName').value,
-    document.getElementById('regEmail').value,
-    document.getElementById('regPhone').value,
-    document.getElementById('regPass').value,
-    document.getElementById('regPatient').value,
+    document.getElementById("regName").value,
+    document.getElementById("regEmail").value,
+    document.getElementById("regPhone").value,
+    document.getElementById("regPass").value,
+    document.getElementById("regPatient").value,
   );
-  if (res.error) { document.getElementById('app').innerHTML = renderRegister(res.error); document.getElementById('regForm').addEventListener('submit', handleRegister); }
-  else { location.hash = 'dashboard'; loadGHLData(); render(); }
+  if (res.error) {
+    document.getElementById("app").innerHTML = renderRegister(res.error);
+    document
+      .getElementById("regForm")
+      .addEventListener("submit", handleRegister);
+  } else {
+    location.hash = "dashboard";
+    loadGHLData();
+    render();
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
 // SHELL (sidebar + main)
 // ══════════════════════════════════════════════════════════════
 function renderShell(user, activeV) {
-  const init = (user.fullname||'U')[0].toUpperCase();
+  const init = (user.fullname || "U")[0].toUpperCase();
   const nav = [
-    {view:'dashboard',icon:'🏠',label:'Dashboard'},
-    {view:'resources',icon:'📚',label:'Resources'},
+    { view: "dashboard", icon: "🏠", label: "Dashboard" },
+    { view: "resources", icon: "📚", label: "Resources" },
   ];
-  const navLinks = nav.map(n => `<a class="dh-nav-link${activeV===n.view?' active':''}" href="#${n.view}"><span class="text-lg">${n.icon}</span><span>${n.label}</span></a>`).join('');
-  const mobIcons = nav.map(n => `<a href="#${n.view}" class="text-lg ${activeV===n.view?'text-white':'text-white/50'}">${n.icon}</a>`).join('');
-  let content = '';
-  if      (activeV==='dashboard') content = renderDashboard(user);
-  else if (activeV==='resources') content = renderResources();
+  const navLinks = nav
+    .map(
+      (n) =>
+        `<a class="dh-nav-link${activeV === n.view ? " active" : ""}" href="#${n.view}"><span class="text-lg">${n.icon}</span><span>${n.label}</span></a>`,
+    )
+    .join("");
+  const mobIcons = nav
+    .map(
+      (n) =>
+        `<a href="#${n.view}" class="text-lg ${activeV === n.view ? "text-white" : "text-white/50"}">${n.icon}</a>`,
+    )
+    .join("");
+  let content = "";
+  if (activeV === "dashboard") content = renderDashboard(user);
+  else if (activeV === "resources") content = renderResources();
   return `
     <div class="dh-mob-bar">
       <img src="${CFG.logo}" class="h-8 brightness-0 invert" alt="Logo">
@@ -271,15 +377,19 @@ function renderShell(user, activeV) {
     </div>
     <div class="dh-main"><div class="dh-content">${content}</div></div>
     <!-- Voice AI Widget Container — ElevenLabs widget injected here -->
-    <div id="voice-ai-widget" style="position:fixed;bottom:24px;right:28px;z-index:200;">${(()=>{
-      const ctx  = DHUserContext.getCaregiverContext();
-      const elVars = ctx ? JSON.stringify(DHUserContext.buildElevenLabsVars(ctx)) : '{}';
-      return ctx ? `<elevenlabs-convai
+    <div id="voice-ai-widget" style="position:fixed;bottom:24px;right:28px;z-index:200;">${(() => {
+      const ctx = DHUserContext.getCaregiverContext();
+      const elVars = ctx
+        ? JSON.stringify(DHUserContext.buildElevenLabsVars(ctx))
+        : "{}";
+      return ctx
+        ? `<elevenlabs-convai
         id="dh-el-widget-caregiver"
         agent-id="${esc(CFG.elevenLabsAgentId)}"
         dynamic-variables='${elVars}'
         style="display:block;">
-      </elevenlabs-convai>` : '';
+      </elevenlabs-convai>`
+        : "";
     })()}</div>`;
 }
 
@@ -287,34 +397,44 @@ function renderShell(user, activeV) {
 // 🏠 DASHBOARD — ALL 9 FEATURES
 // ══════════════════════════════════════════════════════════════
 function renderDashboard(user) {
-  const opps    = S.opps;
-  const convos  = S.convos;
+  const opps = S.opps;
+  const convos = S.convos;
   const loading = opps === null;
-  const alerts  = !loading ? getSafetyAlerts(opps) : [];
+  const alerts = !loading ? getSafetyAlerts(opps) : [];
   const filtered = !loading ? getFilteredOpps(opps) : [];
 
   // Counts
-  const total    = !loading ? opps.length : 0;
-  const open     = !loading ? opps.filter(o => o.status !== 'won' && o.status !== 'lost').length : 0;
-  const overdue  = !loading ? opps.filter(o => getSLA(o).hrs >= 48).length : 0;
-  const resolved = !loading ? opps.filter(o => o.status === 'won' || o.status === 'lost').length : 0;
+  const total = !loading ? opps.length : 0;
+  const open = !loading
+    ? opps.filter((o) => o.status !== "won" && o.status !== "lost").length
+    : 0;
+  const overdue = !loading ? opps.filter((o) => getSLA(o).hrs >= 48).length : 0;
+  const resolved = !loading
+    ? opps.filter((o) => o.status === "won" || o.status === "lost").length
+    : 0;
 
   // ── 🚦 Safety Alerts ─────────────────────────────────────
-  let alertsHtml = '';
+  let alertsHtml = "";
   if (!loading && alerts.length) {
-    const criticalCount = alerts.filter(a => isCritical(a)).length;
-    const staleCount    = alerts.filter(a => !isCritical(a)).length;
+    const criticalCount = alerts.filter((a) => isCritical(a)).length;
+    const staleCount = alerts.filter((a) => !isCritical(a)).length;
     alertsHtml = `
       <div class="alert-banner alert-critical mb-5">
         <div class="text-2xl mt-0.5">🚨</div>
         <div class="flex-1">
           <p class="font-black text-red-800 text-sm mb-1">SAFETY ALERT — Immediate Attention Required</p>
           <p class="text-red-700 text-xs font-medium">
-            ${criticalCount ? `<strong>${criticalCount} critical case${criticalCount>1?'s':''}</strong> flagged with urgent keywords.` : ''}
-            ${staleCount    ? ` <strong>${staleCount} case${staleCount>1?'s':''}</strong> not updated in 72+ hours.` : ''}
+            ${criticalCount ? `<strong>${criticalCount} critical case${criticalCount > 1 ? "s" : ""}</strong> flagged with urgent keywords.` : ""}
+            ${staleCount ? ` <strong>${staleCount} case${staleCount > 1 ? "s" : ""}</strong> not updated in 72+ hours.` : ""}
           </p>
           <div class="flex flex-wrap gap-2 mt-2">
-            ${alerts.slice(0,3).map(a => `<span class="dh-badge dh-badge-critical">${esc((a.contact?.name||'Case').split(' ')[0])} · ${esc(a.name||'Unnamed').slice(0,30)}</span>`).join('')}
+            ${alerts
+              .slice(0, 3)
+              .map(
+                (a) =>
+                  `<span class="dh-badge dh-badge-critical">${esc((a.contact?.name || "Case").split(" ")[0])} · ${esc(a.name || "Unnamed").slice(0, 30)}</span>`,
+              )
+              .join("")}
           </div>
         </div>
         <button onclick="setFilter('critical')" class="dh-btn-primary dh-btn-sm" style="width:auto;white-space:nowrap;">View All</button>
@@ -325,79 +445,97 @@ function renderDashboard(user) {
   const profileHtml = `
     <div class="dh-card flex items-center gap-5">
       <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#006D77] to-[#003D44] flex items-center justify-center text-white font-black text-2xl flex-shrink-0">
-        ${(user.fullname||'U')[0].toUpperCase()}
+        ${(user.fullname || "U")[0].toUpperCase()}
       </div>
       <div class="flex-1 min-w-0">
         <p class="font-black text-slate-900 text-lg leading-tight truncate">${esc(user.fullname)}</p>
         <p class="text-slate-500 text-xs font-semibold truncate mt-0.5">${esc(user.email)}</p>
-        ${user.phone ? `<p class="text-slate-400 text-xs mt-0.5">${esc(user.phone)}</p>` : ''}
+        ${user.phone ? `<p class="text-slate-400 text-xs mt-0.5">${esc(user.phone)}</p>` : ""}
         <p class="text-[10px] text-teal-600 font-black uppercase tracking-wider mt-1.5">Member since ${fmtDate(user.joinedAt)}</p>
       </div>
       <span class="dh-badge dh-badge-track hidden md:inline">Active</span>
     </div>`;
 
   const statsHtml = [
-    ['📂', 'Total Cases',  loading ? '…' : total,    'bg-blue-50'],
-    ['🔓', 'Open',         loading ? '…' : open,     'bg-orange-50'],
-    ['⏰', 'Overdue SLA',  loading ? '…' : overdue,  'bg-red-50'],
-    ['✅', 'Resolved',     loading ? '…' : resolved, 'bg-emerald-50'],
-  ].map(([ic,lb,val,bg]) => `
+    ["📂", "Total Cases", loading ? "…" : total, "bg-blue-50"],
+    ["🔓", "Open", loading ? "…" : open, "bg-orange-50"],
+    ["⏰", "Overdue SLA", loading ? "…" : overdue, "bg-red-50"],
+    ["✅", "Resolved", loading ? "…" : resolved, "bg-emerald-50"],
+  ]
+    .map(
+      ([ic, lb, val, bg]) => `
     <div class="dh-stat-card">
       <div class="dh-stat-icon ${bg}">${ic}</div>
       <div><p class="text-2xl font-black text-slate-900">${val}</p>
         <p class="text-xs text-slate-500 font-semibold mt-0.5 leading-tight">${lb}</p></div>
-    </div>`).join('');
+    </div>`,
+    )
+    .join("");
 
   // ── 📈 Smart Filter Tabs ──────────────────────────────────
-  const newCt      = !loading ? opps.filter(op=>getDisplayStatus(op)==='new').length      : 0;
-  const triagedCt  = !loading ? opps.filter(op=>getDisplayStatus(op)==='triaged').length  : 0;
-  const dueSoonCt  = !loading ? opps.filter(op=>isDueSoon(op)).length                     : 0;
+  const newCt = !loading
+    ? opps.filter((op) => getDisplayStatus(op) === "new").length
+    : 0;
+  const triagedCt = !loading
+    ? opps.filter((op) => getDisplayStatus(op) === "triaged").length
+    : 0;
+  const dueSoonCt = !loading ? opps.filter((op) => isDueSoon(op)).length : 0;
   const filters = [
-    {key:'all',      label:`All (${total})`},
-    {key:'new',      label:`🆕 New (${newCt})`},
-    {key:'triaged',  label:`📋 Triaged (${triagedCt})`},
-    {key:'due_soon', label:`⏰ Due Soon (${dueSoonCt})`},
-    {key:'resolved', label:`✅ Resolved (${resolved})`},
-    {key:'critical', label:`🚨 Critical (${!loading?alerts.filter(a=>isCritical(a)).length:0})`},
+    { key: "all", label: `All (${total})` },
+    { key: "new", label: `🆕 New (${newCt})` },
+    { key: "triaged", label: `📋 Triaged (${triagedCt})` },
+    { key: "due_soon", label: `⏰ Due Soon (${dueSoonCt})` },
+    { key: "resolved", label: `✅ Resolved (${resolved})` },
+    {
+      key: "critical",
+      label: `🚨 Critical (${!loading ? alerts.filter((a) => isCritical(a)).length : 0})`,
+    },
   ];
-  const filterTabs = filters.map(f => `<button class="filter-btn${S.filter===f.key?' active':''}" onclick="setFilter('${f.key}')">${f.label}</button>`).join('');
+  const filterTabs = filters
+    .map(
+      (f) =>
+        `<button class="filter-btn${S.filter === f.key ? " active" : ""}" onclick="setFilter('${f.key}')">${f.label}</button>`,
+    )
+    .join("");
 
   // ── 📂 Case Details Table ─────────────────────────────────
-  let caseRows = '';
+  let caseRows = "";
   if (loading) {
     caseRows = `<tr><td colspan="5" class="text-center py-10"><div class="spinner mx-auto mb-2"></div><p class="text-slate-400 text-sm">Loading cases from GHL…</p></td></tr>`;
   } else if (!filtered.length) {
     caseRows = `<tr><td colspan="5" class="text-center py-10"><div class="text-4xl mb-2">📭</div><p class="text-slate-400 text-sm font-semibold">No cases match this filter.</p></td></tr>`;
   } else {
-    caseRows = filtered.map((op, i) => {
-      const sla      = getSLA(op);
-      const critical = isCritical(op);
-      return `
-        <tr${critical ? ' style="background:#fff9f9;"' : ''}>
+    caseRows = filtered
+      .map((op, i) => {
+        const sla = getSLA(op);
+        const critical = isCritical(op);
+        return `
+        <tr${critical ? ' style="background:#fff9f9;"' : ""}>
           <td>
             <div class="flex items-center gap-2">
-              ${critical ? '<span class="text-red-500 text-lg">🚨</span>' : ''}
+              ${critical ? '<span class="text-red-500 text-lg">🚨</span>' : ""}
               <div>
-                <p class="font-bold text-slate-800 text-sm leading-tight">${esc(op.contact?.name||'Unknown')}</p>
-                <p class="text-[10px] text-slate-400 font-semibold">${esc(op.contact?.phone||op.contact?.email||'')}</p>
+                <p class="font-bold text-slate-800 text-sm leading-tight">${esc(op.contact?.name || "Unknown")}</p>
+                <p class="text-[10px] text-slate-400 font-semibold">${esc(op.contact?.phone || op.contact?.email || "")}</p>
               </div>
             </div>
           </td>
           <td class="max-w-[180px]">
-            <p class="text-xs text-slate-700 font-semibold truncate">${esc(op.name||'—')}</p>
-            <p class="text-[10px] text-slate-400 mt-0.5">${esc(op.pipelineStageName||'')}</p>
+            <p class="text-xs text-slate-700 font-semibold truncate">${esc(op.name || "—")}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">${esc(op.pipelineStageName || "")}</p>
           </td>
           <td><span class="dh-badge ${sla.cls}">${sla.label}</span><p class="text-[10px] text-slate-400 mt-1">${timeAgo(op.updatedAt)}</p></td>
           <td class="text-[10px] text-slate-500">${fmtDate(op.createdAt)}</td>
           <td>
             <div class="flex gap-1.5 justify-end">
               <button onclick="openNoteModal(${i})" title="Add Note" class="p-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition text-sm">📝</button>
-              ${op.contact?.phone ? `<a href="tel:${esc(op.contact.phone)}" title="Call" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-sm">📞</a>` : ''}
+              ${op.contact?.phone ? `<a href="tel:${esc(op.contact.phone)}" title="Call" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-sm">📞</a>` : ""}
               <button onclick="openCallbackModal(${i})" title="Schedule Callback" class="p-2 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 transition text-sm">📅</button>
             </div>
           </td>
         </tr>`;
-    }).join('');
+      })
+      .join("");
   }
 
   const casesHtml = `
@@ -427,30 +565,35 @@ function renderDashboard(user) {
       </div>
       <div class="mt-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
         <p class="text-[10px] font-black text-teal-700 uppercase tracking-wider mb-1">System Status</p>
-        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full dh-pulse"></span><span class="text-xs text-slate-500 font-semibold">GHL ${loading?'Connecting…':'Connected'}</span></div>
-        ${!loading && S.opps!==null ? `<p class="text-[10px] text-slate-400 mt-1">${opps.length} active opportunities</p>` : ''}
+        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full dh-pulse"></span><span class="text-xs text-slate-500 font-semibold">GHL ${loading ? "Connecting…" : "Connected"}</span></div>
+        ${!loading && S.opps !== null ? `<p class="text-[10px] text-slate-400 mt-1">${opps.length} active opportunities</p>` : ""}
       </div>
     </div>`;
 
   // ── 💬 Conversation History ───────────────────────────────
-  let convoItems = '';
+  let convoItems = "";
   if (S.convos === null) {
     convoItems = `<div class="text-center py-6"><div class="spinner mx-auto mb-2"></div><p class="text-slate-400 text-xs">Loading conversations…</p></div>`;
   } else if (!S.convos.length) {
     convoItems = `<div class="text-center py-6"><div class="text-3xl mb-2">💬</div><p class="text-slate-400 text-sm font-semibold">No conversations yet.</p></div>`;
   } else {
-    convoItems = S.convos.slice(0,8).map(c => `
+    convoItems = S.convos
+      .slice(0, 8)
+      .map(
+        (c) => `
       <div class="convo-item mb-2">
         <div class="flex justify-between items-start mb-1">
-          <p class="font-bold text-slate-800 text-sm leading-tight">${esc(c.contactName||c.fullName||'Unknown Contact')}</p>
-          <span class="text-[10px] text-slate-400 font-semibold ml-2 whitespace-nowrap">${timeAgo(c.lastMessageDate||c.dateUpdated)}</span>
+          <p class="font-bold text-slate-800 text-sm leading-tight">${esc(c.contactName || c.fullName || "Unknown Contact")}</p>
+          <span class="text-[10px] text-slate-400 font-semibold ml-2 whitespace-nowrap">${timeAgo(c.lastMessageDate || c.dateUpdated)}</span>
         </div>
-        <p class="text-xs text-slate-500 leading-relaxed line-clamp-1">${esc(c.lastMessageBody||c.snippet||'No preview available')}</p>
+        <p class="text-xs text-slate-500 leading-relaxed line-clamp-1">${esc(c.lastMessageBody || c.snippet || "No preview available")}</p>
         <div class="flex gap-1.5 mt-2">
-          ${c.unreadCount ? `<span class="dh-badge dh-badge-needs">${c.unreadCount} unread</span>` : ''}
-          <span class="dh-badge" style="background:#f1f5f9;color:#64748b;">${esc(c.type||'SMS')}</span>
+          ${c.unreadCount ? `<span class="dh-badge dh-badge-needs">${c.unreadCount} unread</span>` : ""}
+          <span class="dh-badge" style="background:#f1f5f9;color:#64748b;">${esc(c.type || "SMS")}</span>
         </div>
-      </div>`).join('');
+      </div>`,
+      )
+      .join("");
   }
 
   const conversationsHtml = `
@@ -460,9 +603,12 @@ function renderDashboard(user) {
     </div>`;
 
   // ── 📞 Callback Scheduler ─────────────────────────────────
-  const calOptions = S.calendars && S.calendars.length
-    ? S.calendars.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')
-    : '<option value="">No calendars found</option>';
+  const calOptions =
+    S.calendars && S.calendars.length
+      ? S.calendars
+          .map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`)
+          .join("")
+      : '<option value="">No calendars found</option>';
 
   const callbackHtml = `
     <div class="dh-card">
@@ -480,7 +626,7 @@ function renderDashboard(user) {
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Date</label>
-            <input id="cbDate" class="dh-input" type="date" min="${new Date().toISOString().split('T')[0]}">
+            <input id="cbDate" class="dh-input" type="date" min="${new Date().toISOString().split("T")[0]}">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Time</label>
@@ -493,23 +639,50 @@ function renderDashboard(user) {
 
   // ── 📚 Knowledge Base ─────────────────────────────────────
   const kb = [
-    {icon:'🧠', title:'Understanding Dementia Stages',    tag:'Education',  key:'stages'},
-    {icon:'❤️', title:'Caregiver Burnout — Warning Signs',tag:'Wellbeing',  key:'burnout'},
-    {icon:'💊', title:'Medication Management Guide',       tag:'Medical',    key:'meds'},
-    {icon:'🏠', title:'Home Safety Checklist',             tag:'Safety',     key:'home'},
-    {icon:'👥', title:'CARA Registration Process',         tag:'Admin',      key:'cara'},
-    {icon:'📞', title:'Singapore Helplines Directory',     tag:'Emergency',  key:'helplines'},
+    {
+      icon: "🧠",
+      title: "Understanding Dementia Stages",
+      tag: "Education",
+      key: "stages",
+    },
+    {
+      icon: "❤️",
+      title: "Caregiver Burnout — Warning Signs",
+      tag: "Wellbeing",
+      key: "burnout",
+    },
+    {
+      icon: "💊",
+      title: "Medication Management Guide",
+      tag: "Medical",
+      key: "meds",
+    },
+    { icon: "🏠", title: "Home Safety Checklist", tag: "Safety", key: "home" },
+    {
+      icon: "👥",
+      title: "CARA Registration Process",
+      tag: "Admin",
+      key: "cara",
+    },
+    {
+      icon: "📞",
+      title: "Singapore Helplines Directory",
+      tag: "Emergency",
+      key: "helplines",
+    },
   ];
-  const kbCards = kb.map(r => {
-    const viewed = S.kbViewed.includes(r.key);
-    return `
+  const kbCards = kb
+    .map((r) => {
+      const viewed = S.kbViewed.includes(r.key);
+      return `
       <div onclick="markKBViewed('${r.key}')" class="dh-card cursor-pointer transition-shadow hover:shadow-md" style="padding:16px;">
         <div class="text-2xl mb-2">${r.icon}</div>
-        <span class="kb-chip ${viewed?'viewed':''}">${viewed ? '✓ Read' : r.tag}</span>
+        <span class="kb-chip ${viewed ? "viewed" : ""}">${viewed ? "✓ Read" : r.tag}</span>
         <p class="font-bold text-slate-800 text-sm mt-1 leading-snug">${r.title}</p>
-        <p class="text-[#006D77] text-xs font-bold mt-2">${viewed ? 'Review again →' : 'Learn more →'}</p>
+        <p class="text-[#006D77] text-xs font-bold mt-2">${viewed ? "Review again →" : "Learn more →"}</p>
       </div>`;
-  }).join('');
+    })
+    .join("");
   const kbHtml = `
     <div class="dh-card">
       <div class="flex justify-between items-center mb-4">
@@ -543,12 +716,15 @@ function renderDashboard(user) {
 // ══════════════════════════════════════════════════════════════
 // DASHBOARD ACTIONS
 // ══════════════════════════════════════════════════════════════
-function setFilter(f) { S.filter = f; render(); }
+function setFilter(f) {
+  S.filter = f;
+  render();
+}
 
 function markKBViewed(key) {
   if (!S.kbViewed.includes(key)) {
     S.kbViewed.push(key);
-    localStorage.setItem('dh_kb_viewed', JSON.stringify(S.kbViewed));
+    localStorage.setItem("dh_kb_viewed", JSON.stringify(S.kbViewed));
     render();
   }
 }
@@ -557,14 +733,14 @@ function markKBViewed(key) {
 let _noteOppIdx = null;
 function openNoteModal(idx) {
   _noteOppIdx = idx;
-  const op = idx !== null ? (S.opps||[])[idx] : null;
-  const name = op?.contact?.name || '';
-  document.getElementById('modal-root').innerHTML = `
+  const op = idx !== null ? (S.opps || [])[idx] : null;
+  const name = op?.contact?.name || "";
+  document.getElementById("modal-root").innerHTML = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
       <div class="modal-box">
         <h2 class="text-xl font-black text-slate-900 mb-1">📝 Add Case Note</h2>
-        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mb-5">Syncing to: <span class="text-teal-600">${esc(name||'Select a case below')}</span></p>
-        ${!name ? `<div class="mb-3"><label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Contact ID</label><input id="noteContactId" class="dh-input" placeholder="GHL Contact ID"></div>` : ''}
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mb-5">Syncing to: <span class="text-teal-600">${esc(name || "Select a case below")}</span></p>
+        ${!name ? `<div class="mb-3"><label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Contact ID</label><input id="noteContactId" class="dh-input" placeholder="GHL Contact ID"></div>` : ""}
         <textarea id="noteText" class="dh-input resize-none h-32 mb-2" placeholder="Describe the care update or urgency…"></textarea>
         <div id="noteResult" class="mt-2"></div>
         <div class="flex gap-3 mt-4">
@@ -576,38 +752,54 @@ function openNoteModal(idx) {
 }
 
 async function submitNote() {
-  const noteText  = document.getElementById('noteText').value.trim();
-  const btn       = document.getElementById('noteBtn');
-  const resultEl  = document.getElementById('noteResult');
-  const op        = _noteOppIdx !== null ? (S.opps||[])[_noteOppIdx] : null;
-  const contactId = op?.contact?.id || (document.getElementById('noteContactId')?.value || '').trim();
+  const noteText = document.getElementById("noteText").value.trim();
+  const btn = document.getElementById("noteBtn");
+  const resultEl = document.getElementById("noteResult");
+  const op = _noteOppIdx !== null ? (S.opps || [])[_noteOppIdx] : null;
+  const contactId =
+    op?.contact?.id ||
+    (document.getElementById("noteContactId")?.value || "").trim();
 
-  if (!noteText)    { resultEl.innerHTML = '<div class="alert-error">Please type a note.</div>'; return; }
-  if (!contactId)   { resultEl.innerHTML = '<div class="alert-error">No contact ID found.</div>'; return; }
+  if (!noteText) {
+    resultEl.innerHTML = '<div class="alert-error">Please type a note.</div>';
+    return;
+  }
+  if (!contactId) {
+    resultEl.innerHTML = '<div class="alert-error">No contact ID found.</div>';
+    return;
+  }
 
-  btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
   try {
     await postNote(contactId, noteText);
-    resultEl.innerHTML = '<div class="alert-success">✓ Note synced to GHL!</div>';
-    document.getElementById('noteText').value = '';
+    resultEl.innerHTML =
+      '<div class="alert-success">✓ Note synced to GHL!</div>';
+    document.getElementById("noteText").value = "";
     setTimeout(closeModal, 1500);
-  } catch(e) {
+  } catch (e) {
     resultEl.innerHTML = `<div class="alert-error">Failed: ${esc(e.message)}</div>`;
-  } finally { btn.innerHTML = 'Sync to GHL'; btn.disabled = false; }
+  } finally {
+    btn.innerHTML = "Sync to GHL";
+    btn.disabled = false;
+  }
 }
 
 // Callback Modal
 let _cbOppIdx = null;
 function openCallbackModal(idx) {
   _cbOppIdx = idx;
-  const op   = idx !== null ? (S.opps||[])[idx] : null;
-  const name = op?.contact?.name || '';
-  const cid  = op?.contact?.id   || '';
-  const calOptions = S.calendars && S.calendars.length
-    ? S.calendars.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')
-    : '<option value="">No calendars loaded</option>';
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('modal-root').innerHTML = `
+  const op = idx !== null ? (S.opps || [])[idx] : null;
+  const name = op?.contact?.name || "";
+  const cid = op?.contact?.id || "";
+  const calOptions =
+    S.calendars && S.calendars.length
+      ? S.calendars
+          .map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`)
+          .join("")
+      : '<option value="">No calendars loaded</option>';
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("modal-root").innerHTML = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
       <div class="modal-box">
         <h2 class="text-xl font-black text-slate-900 mb-1">📅 Schedule Callback</h2>
@@ -634,65 +826,94 @@ function openCallbackModal(idx) {
 }
 
 async function submitCallbackModal() {
-  const calId     = document.getElementById('mcbCal').value;
-  const contactId = document.getElementById('mcbContact').value.trim();
-  const date      = document.getElementById('mcbDate').value;
-  const time      = document.getElementById('mcbTime').value;
-  const btn       = document.getElementById('mcbBtn');
-  const resultEl  = document.getElementById('cbModalResult');
+  const calId = document.getElementById("mcbCal").value;
+  const contactId = document.getElementById("mcbContact").value.trim();
+  const date = document.getElementById("mcbDate").value;
+  const time = document.getElementById("mcbTime").value;
+  const btn = document.getElementById("mcbBtn");
+  const resultEl = document.getElementById("cbModalResult");
 
-  if (!calId || !contactId || !date || !time) { resultEl.innerHTML = '<div class="alert-error">Please fill all fields.</div>'; return; }
+  if (!calId || !contactId || !date || !time) {
+    resultEl.innerHTML =
+      '<div class="alert-error">Please fill all fields.</div>';
+    return;
+  }
 
-  const startTime = new Date(date + 'T' + time + ':00').toISOString();
-  const endTime   = new Date(new Date(startTime).getTime() + 30*60000).toISOString(); // 30min slot
+  const startTime = new Date(date + "T" + time + ":00").toISOString();
+  const endTime = new Date(
+    new Date(startTime).getTime() + 30 * 60000,
+  ).toISOString(); // 30min slot
 
-  btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
   try {
     await scheduleCallback(calId, contactId, startTime, endTime);
-    resultEl.innerHTML = '<div class="alert-success">✓ Callback scheduled in GHL!</div>';
+    resultEl.innerHTML =
+      '<div class="alert-success">✓ Callback scheduled in GHL!</div>';
     setTimeout(closeModal, 1800);
-  } catch(e) {
+  } catch (e) {
     resultEl.innerHTML = `<div class="alert-error">Failed: ${esc(e.message)}</div>`;
-  } finally { btn.innerHTML = 'Book Callback'; btn.disabled = false; }
+  } finally {
+    btn.innerHTML = "Book Callback";
+    btn.disabled = false;
+  }
 }
 
 // Inline callback (dashboard panel)
 async function submitCallback() {
-  const calId     = document.getElementById('cbCalendar')?.value;
-  const contactId = document.getElementById('cbContactId')?.value?.trim();
-  const date      = document.getElementById('cbDate')?.value;
-  const time      = document.getElementById('cbTime')?.value;
-  const btn       = document.getElementById('cbBtn');
-  const resultEl  = document.getElementById('cbResult');
-  if (!calId || !contactId || !date || !time) { resultEl.innerHTML = '<div class="alert-error">Please fill all fields.</div>'; return; }
-  const startTime = new Date(date + 'T' + time + ':00').toISOString();
-  const endTime   = new Date(new Date(startTime).getTime() + 30*60000).toISOString();
-  btn.innerHTML = '<span class="spinner mx-auto"></span>'; btn.disabled = true;
+  const calId = document.getElementById("cbCalendar")?.value;
+  const contactId = document.getElementById("cbContactId")?.value?.trim();
+  const date = document.getElementById("cbDate")?.value;
+  const time = document.getElementById("cbTime")?.value;
+  const btn = document.getElementById("cbBtn");
+  const resultEl = document.getElementById("cbResult");
+  if (!calId || !contactId || !date || !time) {
+    resultEl.innerHTML =
+      '<div class="alert-error">Please fill all fields.</div>';
+    return;
+  }
+  const startTime = new Date(date + "T" + time + ":00").toISOString();
+  const endTime = new Date(
+    new Date(startTime).getTime() + 30 * 60000,
+  ).toISOString();
+  btn.innerHTML = '<span class="spinner mx-auto"></span>';
+  btn.disabled = true;
   try {
     await scheduleCallback(calId, contactId, startTime, endTime);
     resultEl.innerHTML = '<div class="alert-success">✓ Callback booked!</div>';
-    document.getElementById('cbContactId').value = '';
-    document.getElementById('cbDate').value = '';
-  } catch(e) {
+    document.getElementById("cbContactId").value = "";
+    document.getElementById("cbDate").value = "";
+  } catch (e) {
     resultEl.innerHTML = `<div class="alert-error">Failed: ${esc(e.message)}</div>`;
-  } finally { btn.innerHTML = 'Book Callback →'; btn.disabled = false; }
+  } finally {
+    btn.innerHTML = "Book Callback →";
+    btn.disabled = false;
+  }
 }
 
-function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+function closeModal() {
+  document.getElementById("modal-root").innerHTML = "";
+}
 
 // ══════════════════════════════════════════════════════════════
 // CHAT VIEW — GHL webchat + ElevenLabs voice, both context-aware
 // ══════════════════════════════════════════════════════════════
 function renderChat(user) {
-  const ctx      = DHUserContext.getCaregiverContext();
-  const chatUrl  = DHUserContext.buildGHLChatUrl(CFG.locationId, ctx);
-  const elVars   = ctx ? JSON.stringify(DHUserContext.buildElevenLabsVars(ctx)) : '{}';
+  const ctx = DHUserContext.getCaregiverContext();
+  const chatUrl = DHUserContext.buildGHLChatUrl(CFG.locationId, ctx);
+  const elVars = ctx
+    ? JSON.stringify(DHUserContext.buildElevenLabsVars(ctx))
+    : "{}";
   const greeting = ctx
-    ? `Welcome back, ${esc(ctx.firstName)}. ${ctx.patientName ? 'Caring for <strong>' + esc(ctx.patientName) + '</strong>.' : ''}`
-    : 'AI assistant is available 24/7 to help with caregiving questions.';
+    ? `Welcome back, ${esc(ctx.firstName)}. ${ctx.patientName ? "Caring for <strong>" + esc(ctx.patientName) + "</strong>." : ""}`
+    : "AI assistant is available 24/7 to help with caregiving questions.";
 
   // Log the chat session start
-  if (ctx) DHUserContext.storeConversationEvent(ctx, { type: 'chat_view_opened', channel: 'ghl_webchat' });
+  if (ctx)
+    DHUserContext.storeConversationEvent(ctx, {
+      type: "chat_view_opened",
+      channel: "ghl_webchat",
+    });
 
   return `
     <div class="mb-6">
@@ -714,7 +935,7 @@ function renderChat(user) {
             <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full dh-pulse"></span>
             <span class="text-emerald-700 text-xs font-black uppercase tracking-widest">Chat — Online</span>
           </div>
-          ${ctx ? `<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Logged in as ${esc(ctx.name)}</span>` : ''}
+          ${ctx ? `<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Logged in as ${esc(ctx.name)}</span>` : ""}
         </div>
         <iframe id="ghl-chat-frame" src="${esc(chatUrl)}"
           style="width:100%;height:620px;border:none;border-radius:16px;display:block;"
@@ -733,13 +954,13 @@ function renderChat(user) {
             <span class="w-2.5 h-2.5 bg-violet-500 rounded-full dh-pulse"></span>
             <span class="text-violet-700 text-xs font-black uppercase tracking-widest">Voice AI — Ready</span>
           </div>
-          ${ctx ? `<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Speaking as ${esc(ctx.name)}</span>` : ''}
+          ${ctx ? `<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Speaking as ${esc(ctx.name)}</span>` : ""}
         </div>
 
         <div class="flex flex-col items-center justify-center py-8 gap-6">
           <div class="text-center mb-2">
             <p class="font-black text-slate-800 text-lg mb-1">Talk to Your AI Care Assistant</p>
-            <p class="text-slate-500 text-sm">Press the button below to start a voice conversation.${ctx?.patientName ? ' I already know you\'re caring for <strong>' + esc(ctx.patientName) + '</strong>.' : ''}</p>
+            <p class="text-slate-500 text-sm">Press the button below to start a voice conversation.${ctx?.patientName ? " I already know you're caring for <strong>" + esc(ctx.patientName) + "</strong>." : ""}</p>
           </div>
 
           <!-- ElevenLabs widget — dynamic-variables inject user context -->
@@ -759,50 +980,395 @@ function renderChat(user) {
 }
 
 function showChatTab(tab) {
-  document.getElementById('chat-panel-text').classList.toggle('hidden',  tab !== 'text');
-  document.getElementById('chat-panel-voice').classList.toggle('hidden', tab !== 'voice');
-  document.getElementById('tab-text').classList.toggle('active',  tab === 'text');
-  document.getElementById('tab-voice').classList.toggle('active', tab === 'voice');
+  document
+    .getElementById("chat-panel-text")
+    .classList.toggle("hidden", tab !== "text");
+  document
+    .getElementById("chat-panel-voice")
+    .classList.toggle("hidden", tab !== "voice");
+  document
+    .getElementById("tab-text")
+    .classList.toggle("active", tab === "text");
+  document
+    .getElementById("tab-voice")
+    .classList.toggle("active", tab === "voice");
 
-  if (tab === 'voice') {
+  if (tab === "voice") {
     // Ensure ElevenLabs widget has the latest context (in case user data changed)
-    const widget = document.getElementById('dh-el-widget-caregiver');
-    const ctx    = DHUserContext.getCaregiverContext();
+    const widget = document.getElementById("dh-el-widget-caregiver");
+    const ctx = DHUserContext.getCaregiverContext();
     DHUserContext.injectElevenLabsVars(widget, ctx);
-    if (ctx) DHUserContext.storeConversationEvent(ctx, { type: 'voice_tab_opened', channel: 'elevenlabs' });
+    if (ctx)
+      DHUserContext.storeConversationEvent(ctx, {
+        type: "voice_tab_opened",
+        channel: "elevenlabs",
+      });
   }
 }
 
 // ══════════════════════════════════════════════════════════════
 // RESOURCES VIEW
 // ══════════════════════════════════════════════════════════════
+function openResourceLink(url) {
+  if (url.startsWith("tel:")) {
+    window.location.href = url;
+  } else {
+    window.open(url, "_blank");
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      const btn = event.target;
+      const original = btn.textContent;
+      btn.textContent = "✓ Copied!";
+      btn.classList.add("bg-emerald-100", "text-emerald-600");
+      btn.classList.remove("bg-slate-100", "text-slate-500");
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove("bg-emerald-100", "text-emerald-600");
+        btn.classList.add("bg-slate-100", "text-slate-500");
+      }, 2000);
+    })
+    .catch(() => alert("Failed to copy"));
+}
+
 function renderResources() {
-  const resources = [
-    ['🧠','Understanding Dementia','Learn the stages, signs, and how to respond with care.','Education'],
-    ['❤️','Caregiver Self-Care','Maintaining your own wellbeing while supporting others.','Wellbeing'],
-    ['💊','Medication Guide','Safely managing medications for someone with dementia.','Medical'],
-    ['🏠','Home Safety','Make the home safer and more dementia-friendly.','Safety'],
-    ['👥','Support Groups','Find local and online communities near you.','Community'],
-    ['📞','Emergency Contacts','Key helplines and crisis resources in Singapore.','Emergency'],
-    ['📝','Daily Routines','Structuring days to reduce anxiety and confusion.','Daily Care'],
-    ['🗣️','Communication Tips','Communicate effectively with a person with dementia.','Skills'],
-    ['🍽️','Nutrition & Meals','Dietary tips tailored for dementia care.','Health'],
+  // Emergency helplines — rendered separately with special design
+  const emergency = [
+    {
+      icon: "🚑",
+      name: "999 Emergency Line",
+      text: "Life-threatening emergencies only",
+      hours: "24/7",
+      phone: "999",
+      link: "tel:999",
+      priority: "critical",
+      color: "red",
+    },
+    {
+      icon: "📞",
+      name: "Dementia Singapore Helpline",
+      text: "Dementia & caregiver advice",
+      hours: "Mon-Fri 9am-6pm, Sat 9am-1pm",
+      phone: "6377 0700",
+      link: "tel:6377-0700",
+      priority: "high",
+      color: "teal",
+    },
+    {
+      icon: "🏥",
+      name: "AIC Hotline",
+      text: "Care services & subsidy info",
+      hours: "24/7",
+      phone: "1800-650-6060",
+      link: "tel:+6518006506060",
+      priority: "medium",
+      color: "blue",
+    },
+    {
+      icon: "💉",
+      name: "HPB Health Programs",
+      text: "Senior wellness & prevention",
+      hours: "24/7",
+      phone: "1800-223-1313",
+      link: "tel:1800-223-1313",
+      priority: "medium",
+      color: "emerald",
+    },
   ];
-  return `
-    <div class="mb-8">
-      <h1 class="text-3xl font-black text-slate-900">📚 Resources</h1>
-      <p class="text-slate-500 mt-1 font-medium">Guides, tools, and information for caregivers.</p>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      ${resources.map(([icon,title,desc,tag]) => `
-        <div class="dh-card cursor-pointer transition-shadow hover:shadow-md">
-          <div class="text-3xl mb-3">${icon}</div>
-          <span class="inline-block bg-teal-50 text-[#006D77] text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">${tag}</span>
-          <h3 class="font-black text-slate-800 text-base mb-1.5">${title}</h3>
-          <p class="text-slate-500 text-sm leading-relaxed mb-4">${desc}</p>
-          <span class="text-[#006D77] text-sm font-bold">Learn more →</span>
-        </div>`).join('')}
-    </div>`;
+
+  const sections = [
+    {
+      title: "🤝 Caregiver Support & Programs",
+      desc: "Community programs and professional support",
+      color: "purple",
+      items: [
+        {
+          icon: "👥",
+          name: "Caregiver Support Groups (CSG)",
+          text: "Join peer support groups led by Dementia Singapore. Weekly meetings across Singapore.",
+          link: "https://dementia.org.sg/csg/",
+          tag: "Community",
+          info: "Dementia Singapore",
+        },
+        {
+          icon: "🎓",
+          name: "Dementia Singapore Academy",
+          text: "Training programs, workshops, and specialized care courses.",
+          link: "https://dementia.org.sg/academy/",
+          tag: "Training",
+          info: "Free courses",
+        },
+        {
+          icon: "💬",
+          name: "Counselling for Caregivers",
+          text: "Professional counselling with emotional support and coping strategies.",
+          link: "https://www.dementiahub.sg/dementia/counselling-for-caregivers/",
+          tag: "Wellness",
+          info: "Personalized",
+        },
+        {
+          icon: "🎵",
+          name: "Dementia Social Club",
+          text: "Recreational activities and social engagement events.",
+          link: "https://dementia.org.sg/csn/",
+          tag: "Activity",
+          info: "Multiple locations",
+        },
+      ],
+    },
+    {
+      title: "🛡️ Safety Tools & Technology",
+      desc: "Digital companions and safety features",
+      color: "blue",
+      items: [
+        {
+          icon: "📱",
+          name: "CARA — Digital Care Companion",
+          text: "Free mobile app with Safe Return, missing person alerts, and resources.",
+          link: "https://cara.sg/",
+          tag: "Technology",
+          info: "Free membership",
+        },
+        {
+          icon: "🔍",
+          name: "Safe Return Program",
+          text: "Help identify and reunite wandering loved ones through CARA alerts.",
+          link: "https://cara.sg/safe-return-guide/",
+          tag: "Safety",
+          info: "Community-powered",
+        },
+        {
+          icon: "📚",
+          name: "Dementia Hub Portal",
+          text: "Singapore's comprehensive resource site with articles and services directory.",
+          link: "https://www.dementiahub.sg/",
+          tag: "Information",
+          info: "Free access",
+        },
+      ],
+    },
+    {
+      title: "📚 Education & Understanding",
+      desc: "Learn about dementia and care strategies",
+      color: "orange",
+      items: [
+        {
+          icon: "🧠",
+          name: "Dementia Stages & Signs",
+          text: "Comprehensive guides on Early, Middle, and Late stage symptoms.",
+          link: "https://www.dementiahub.sg/i-live-with-dementia/",
+          tag: "Education",
+          info: "Interactive",
+        },
+        {
+          icon: "❤️",
+          name: "Caregiver Burnout Recognition",
+          text: "Identify warning signs and learn sustainable self-care practices.",
+          link: "https://dementia.org.sg/about/",
+          tag: "Wellbeing",
+          info: "Expert guidance",
+        },
+        {
+          icon: "🗣️",
+          name: "Communication Strategies",
+          text: "Evidence-based techniques for communicating with someone who has dementia.",
+          link: "https://www.dementiahub.sg/my-loved-one-has-dementia/",
+          tag: "Skills",
+          info: "Video tutorials",
+        },
+        {
+          icon: "📰",
+          name: "Voice of Dementia Newsletter",
+          text: "Monthly updates with caregiver tips, events, and medical insights.",
+          link: "https://dementia.org.sg/vod/",
+          tag: "Newsletter",
+          info: "Free",
+        },
+      ],
+    },
+    {
+      title: "🏥 Care Services & Locations",
+      desc: "Singapore-wide services and care centers",
+      color: "emerald",
+      items: [
+        {
+          icon: "🏢",
+          name: "New Horizon Centres",
+          text: "Multi-purpose dementia care centers in Bukit Batok, Jurong Point, Tampines, Toa Payoh.",
+          link: "https://dementia.org.sg/contact/",
+          tag: "Service",
+          info: "7:30am-6:30pm",
+        },
+        {
+          icon: "💚",
+          name: "Family of Wisdom Program",
+          text: "Multi-generational dementia-inclusive engagement and family support.",
+          link: "https://dementia.org.sg/contact/",
+          tag: "Program",
+          info: "Bendemeer",
+        },
+        {
+          icon: "🎤",
+          name: "Voices for Hope",
+          text: "10-week caregiver advocacy and storytelling program.",
+          link: "https://dementia.org.sg/contact/",
+          tag: "Community",
+          info: "Free",
+        },
+      ],
+    },
+    {
+      title: "🌍 Practical Care Topics",
+      desc: "Day-to-day caregiving advice and strategies",
+      color: "cyan",
+      items: [
+        {
+          icon: "🏠",
+          name: "Home Safety for Dementia",
+          text: "Checklist and tips to make your home safer for someone with dementia.",
+          link: "https://www.dementiahub.sg/",
+          tag: "Safety",
+          info: "Practical",
+        },
+        {
+          icon: "💊",
+          name: "Medication & Health Management",
+          text: "Guidance on medication adherence and working with healthcare providers.",
+          link: "https://www.dementiahub.sg/",
+          tag: "Medical",
+          info: "Expert",
+        },
+        {
+          icon: "🍽️",
+          name: "Nutrition & Mealtime Support",
+          text: "Tips on appetite changes and nutritious meal planning.",
+          link: "https://www.dementiahub.sg/",
+          tag: "Health",
+          info: "Caregiver-focused",
+        },
+        {
+          icon: "😴",
+          name: "Sleep & Behavioral Management",
+          text: "Strategies for managing sleep disturbances and challenging behaviors.",
+          link: "https://www.dementiahub.sg/",
+          tag: "Care",
+          info: "Evidence-based",
+        },
+      ],
+    },
+  ];
+
+  let html = `<div class="mb-8"><h1 class="text-3xl font-black text-slate-900">📚 Resources & Support</h1><p class="text-slate-500 mt-2 font-medium">Singapore comprehensive guides, helplines, and dementia care services for caregivers.</p></div>`;
+
+  // ── EMERGENCY HELPLINES SECTION (prominent, user-friendly) ──
+  html += `<div class="mb-8"><div class="mb-4"><h2 class="text-xl font-black text-slate-900 mb-1">🚨 Emergency Helplines</h2><p class="text-slate-500 text-sm font-medium">Quick access to urgent care & support. Tap any number to call immediately.</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3">`;
+
+  emergency.forEach((item) => {
+    const colorMap = {
+      red: {
+        bg: "bg-red-50",
+        border: "border-red-200",
+        icon: "text-red-600",
+        phone: "text-red-700",
+        tag: "bg-red-100 text-red-700",
+        hover: "hover:bg-red-100",
+      },
+      teal: {
+        bg: "bg-teal-50",
+        border: "border-teal-200",
+        icon: "text-teal-600",
+        phone: "text-teal-700",
+        tag: "bg-teal-100 text-teal-700",
+        hover: "hover:bg-teal-100",
+      },
+      blue: {
+        bg: "bg-blue-50",
+        border: "border-blue-200",
+        icon: "text-blue-600",
+        phone: "text-blue-700",
+        tag: "bg-blue-100 text-blue-700",
+        hover: "hover:bg-blue-100",
+      },
+      emerald: {
+        bg: "bg-emerald-50",
+        border: "border-emerald-200",
+        icon: "text-emerald-600",
+        phone: "text-emerald-700",
+        tag: "bg-emerald-100 text-emerald-700",
+        hover: "hover:bg-emerald-100",
+      },
+    };
+    const colors = colorMap[item.color];
+    html += `
+      <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
+        <div class="flex items-start justify-between mb-3">
+          <span class="text-3xl ${colors.icon}">${item.icon}</span>
+          <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.priority === "critical" ? "🚨 Critical" : item.priority === "high" ? "⚡ High Priority" : "📞 Regular"}</span>
+        </div>
+        <h3 class="font-black text-slate-800 mb-1 text-sm">${item.name}</h3>
+        <p class="text-slate-500 text-xs font-medium mb-3">${item.text}</p>
+        <div class="bg-white rounded-lg p-3 mb-3 border ${colors.border}">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Phone Number</p>
+          <p class="font-black ${colors.phone} text-2xl leading-none mb-2">${item.phone}</p>
+          <p class="text-[10px] text-slate-500 font-semibold">Hours: ${item.hours}</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold ${colors.phone} group-hover:underline">📞 Tap to Call →</span>
+          <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.phone)}')" title="Copy number" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
+        </div>
+      </div>`;
+  });
+  html += `</div></div>`;
+
+  // ── OTHER RESOURCE SECTIONS ──
+  const colorSchemes = {
+    purple: {bg: 'bg-purple-50', border: 'border-purple-200', icon: 'text-purple-600', link: 'text-purple-700', tag: 'bg-purple-100 text-purple-700', hover: 'hover:bg-purple-100', accent: 'text-purple-600'},
+    blue: {bg: 'bg-blue-50', border: 'border-blue-200', icon: 'text-blue-600', link: 'text-blue-700', tag: 'bg-blue-100 text-blue-700', hover: 'hover:bg-blue-100', accent: 'text-blue-600'},
+    orange: {bg: 'bg-orange-50', border: 'border-orange-200', icon: 'text-orange-600', link: 'text-orange-700', tag: 'bg-orange-100 text-orange-700', hover: 'hover:bg-orange-100', accent: 'text-orange-600'},
+    emerald: {bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'text-emerald-600', link: 'text-emerald-700', tag: 'bg-emerald-100 text-emerald-700', hover: 'hover:bg-emerald-100', accent: 'text-emerald-600'},
+    cyan: {bg: 'bg-cyan-50', border: 'border-cyan-200', icon: 'text-cyan-600', link: 'text-cyan-700', tag: 'bg-cyan-100 text-cyan-700', hover: 'hover:bg-cyan-100', accent: 'text-cyan-600'},
+  };
+  
+  sections.forEach((sec) => {
+    const colors = colorSchemes[sec.color] || colorSchemes.purple;
+    html += `<div class="mb-8">
+      <div class="mb-5 pb-4 border-b-2 ${colors.border}">
+        <h2 class="text-xl font-black ${colors.accent} mb-1">${sec.title}</h2>
+        <p class="text-slate-500 text-sm font-medium">${sec.desc}</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+    
+    sec.items.forEach((item) => {
+      const urlDisplay = item.link.replace('https://', '').replace('http://', '').split('/')[0];
+      html += `
+        <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
+          <div class="flex items-start justify-between mb-3">
+            <span class="text-3xl">${item.icon}</span>
+            <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.tag}</span>
+          </div>
+          <h3 class="font-black text-slate-800 mb-2 text-sm leading-snug">${item.name}</h3>
+          <p class="text-slate-500 text-xs leading-relaxed mb-3">${item.text}</p>
+          <div class="${colors.bg} rounded-lg p-3 mb-3 border ${colors.border}">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Details</p>
+            <p class="text-[10px] text-slate-600 font-semibold mb-1">${item.info}</p>
+            <p class="text-[10px] ${colors.link} font-bold truncate">↗ ${urlDisplay}</p>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold ${colors.link} group-hover:underline">Open →</span>
+            <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" title="Copy link" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
+          </div>
+        </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  html += `<div class="mt-8 p-6 bg-gradient-to-r from-red-50 via-orange-50 to-red-50 rounded-2xl border-2 border-red-200"><div class="flex items-start gap-4"><div class="text-3xl mt-1">🆘</div><div class="flex-1"><h3 class="font-black text-red-900 text-lg mb-1">Life-Threatening or Immediate Crisis?</h3><p class="text-red-800 text-sm font-semibold mb-3">Don't wait — call 999 immediately. Every second counts.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div class="bg-white rounded-lg p-4 border border-red-200 cursor-pointer hover:bg-red-50 transition" onclick="openResourceLink('tel:999')"><p class="font-black text-red-700 text-2xl mb-1">🚑 999</p><p class="text-xs text-slate-500 font-semibold">Ambulance • Police • Fire</p></div><div class="bg-white rounded-lg p-4 border border-teal-200 cursor-pointer hover:bg-teal-50 transition" onclick="openResourceLink('tel:6377-0700')"><p class="font-black text-teal-700 text-lg mb-1">📞 6377 0700</p><p class="text-xs text-slate-500 font-semibold">Dementia Helpline • Mon-Fri 9-6pm</p></div></div></div></div></div>`;
+
+  return html;
 }
 
 // ══════════════════════════════════════════════════════════════
