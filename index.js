@@ -414,39 +414,7 @@ function renderShell(user, activeV) {
 // 🏠 DASHBOARD — ALL 9 FEATURES
 // ══════════════════════════════════════════════════════════════
 function renderDashboard(user) {
-  const opps = S.opps;
   const convos = S.convos;
-  const loading = opps === null;
-  const alerts = !loading ? getSafetyAlerts(opps) : [];
-
-  // ── 🚦 Safety Alerts ─────────────────────────────────────
-  let alertsHtml = "";
-  if (!loading && alerts.length) {
-    const criticalCount = alerts.filter((a) => isCritical(a)).length;
-    const staleCount = alerts.filter((a) => !isCritical(a)).length;
-    alertsHtml = `
-      <div class="alert-banner alert-critical mb-5">
-        <div class="text-2xl mt-0.5">🚨</div>
-        <div class="flex-1">
-          <p class="font-black text-red-800 text-sm mb-1">SAFETY ALERT — Immediate Attention Required</p>
-          <p class="text-red-700 text-xs font-medium">
-            ${criticalCount ? `<strong>${criticalCount} critical case${criticalCount > 1 ? "s" : ""}</strong> flagged with urgent keywords.` : ""}
-            ${staleCount ? ` <strong>${staleCount} case${staleCount > 1 ? "s" : ""}</strong> not updated in 72+ hours.` : ""}
-          </p>
-          <div class="flex flex-wrap gap-2 mt-2">
-            ${alerts
-              .slice(0, 3)
-              .map(
-                (a) =>
-                  `<span class="dh-badge dh-badge-critical">${esc((a.contact?.name || "Case").split(" ")[0])} · ${esc(a.name || "Unnamed").slice(0, 30)}</span>`,
-              )
-              .join("")}
-          </div>
-        </div>
-        <button onclick="setFilter('critical')" class="dh-btn-primary dh-btn-sm" style="width:auto;white-space:nowrap;">View All</button>
-      </div>`;
-  }
-
   // ── 👤 Profile + 📊 Stats ─────────────────────────────────
   const profileHtml = `
     <div class="dh-card flex items-center gap-5">
@@ -595,7 +563,6 @@ function renderDashboard(user) {
     </div>`;
 
   return `
-    ${alertsHtml}
     <!-- Profile -->
     <div class="mb-6">${profileHtml}</div>
     <!-- Journal -->
