@@ -419,16 +419,6 @@ function renderDashboard(user) {
   const loading = opps === null;
   const alerts = !loading ? getSafetyAlerts(opps) : [];
 
-  // Counts
-  const total = !loading ? opps.length : 0;
-  const open = !loading
-    ? opps.filter((o) => o.status !== "won" && o.status !== "lost").length
-    : 0;
-  const overdue = !loading ? opps.filter((o) => getSLA(o).hrs >= 48).length : 0;
-  const resolved = !loading
-    ? opps.filter((o) => o.status === "won" || o.status === "lost").length
-    : 0;
-
   // ── 🚦 Safety Alerts ─────────────────────────────────────
   let alertsHtml = "";
   if (!loading && alerts.length) {
@@ -471,22 +461,6 @@ function renderDashboard(user) {
       </div>
       <span class="dh-badge dh-badge-track hidden md:inline">Active</span>
     </div>`;
-
-  const statsHtml = [
-    ["📂", "Total Cases", loading ? "…" : total, "bg-blue-50"],
-    ["🔓", "Open", loading ? "…" : open, "bg-orange-50"],
-    ["⏰", "Overdue SLA", loading ? "…" : overdue, "bg-red-50"],
-    ["✅", "Resolved", loading ? "…" : resolved, "bg-emerald-50"],
-  ]
-    .map(
-      ([ic, lb, val, bg]) => `
-    <div class="dh-stat-card">
-      <div class="dh-stat-icon ${bg}">${ic}</div>
-      <div><p class="text-2xl font-black text-slate-900">${val}</p>
-        <p class="text-xs text-slate-500 font-semibold mt-0.5 leading-tight">${lb}</p></div>
-    </div>`,
-    )
-    .join("");
 
   // ── 📔 Journal / Mood Check-in ───────────────────────────
   const journalKey = `dh_journal_${user.id}`;
@@ -548,22 +522,6 @@ function renderDashboard(user) {
         </div>` : ""}
     </div>`;
 
-  // ── 🛠 Action Tools ───────────────────────────────────────
-  const actionTools = `
-    <div class="dh-card h-fit">
-      <h3 class="font-black text-slate-800 mb-4 text-sm">🛠 Action Tools</h3>
-      <div class="space-y-2">
-        <button onclick="openCallbackModal(null)" class="action-btn"><span class="text-lg">📅</span><div class="text-left"><p class="font-bold text-sm leading-tight">Schedule Callback</p><p class="text-[10px] text-slate-400 mt-0.5">Book via GHL calendar</p></div></button>
-        <a href="tel:1800-867-3377" class="action-btn"><span class="text-lg">📞</span><div class="text-left"><p class="font-bold text-sm leading-tight">Emergency Helpline</p><p class="text-[10px] text-slate-400 mt-0.5">1800-867-3377</p></div></a>
-        <a href="tel:995" class="action-btn danger"><span class="text-lg">🚑</span><div class="text-left"><p class="font-bold text-sm leading-tight">Call 995 — Emergency</p><p class="text-[10px] text-slate-400 mt-0.5">Life-threatening only</p></div></a>
-      </div>
-      <div class="mt-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-        <p class="text-[10px] font-black text-teal-700 uppercase tracking-wider mb-1">System Status</p>
-        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full dh-pulse"></span><span class="text-xs text-slate-500 font-semibold">GHL ${loading ? "Connecting…" : "Connected"}</span></div>
-        ${!loading && S.opps !== null ? `<p class="text-[10px] text-slate-400 mt-1">${opps.length} active opportunities</p>` : ""}
-      </div>
-    </div>`;
-
   // ── 💬 Conversation History ───────────────────────────────
   let convoItems = "";
   if (S.convos === null) {
@@ -596,115 +554,14 @@ function renderDashboard(user) {
       <div class="max-h-80 overflow-y-auto pr-1">${convoItems}</div>
     </div>`;
 
-  // ── 📞 Callback Scheduler ─────────────────────────────────
-  const calOptions =
-    S.calendars && S.calendars.length
-      ? S.calendars
-          .map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`)
-          .join("")
-      : '<option value="">No calendars found</option>';
-
-  const callbackHtml = `
-    <div class="dh-card">
-      <h3 class="font-black text-slate-800 mb-4">📞 Schedule Callback</h3>
-      <div id="cbResult"></div>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Calendar</label>
-          <select id="cbCalendar" class="dh-select">${calOptions}</select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">GHL Contact ID</label>
-          <input id="cbContactId" class="dh-input" placeholder="Paste contact ID from GHL…" style="font-family:monospace;font-size:12px;">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Date</label>
-            <input id="cbDate" class="dh-input" type="date" min="${new Date().toISOString().split("T")[0]}">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Time</label>
-            <input id="cbTime" class="dh-input" type="time" value="10:00">
-          </div>
-        </div>
-        <button id="cbBtn" onclick="submitCallback()" class="dh-btn-primary">Book Callback →</button>
-      </div>
-    </div>`;
-
-  // ── 📚 Knowledge Base ─────────────────────────────────────
-  const kb = [
-    {
-      icon: "🧠",
-      title: "Understanding Dementia Stages",
-      tag: "Education",
-      key: "stages",
-    },
-    {
-      icon: "❤️",
-      title: "Caregiver Burnout — Warning Signs",
-      tag: "Wellbeing",
-      key: "burnout",
-    },
-    {
-      icon: "💊",
-      title: "Medication Management Guide",
-      tag: "Medical",
-      key: "meds",
-    },
-    { icon: "🏠", title: "Home Safety Checklist", tag: "Safety", key: "home" },
-    {
-      icon: "👥",
-      title: "CARA Registration Process",
-      tag: "Admin",
-      key: "cara",
-    },
-    {
-      icon: "📞",
-      title: "Singapore Helplines Directory",
-      tag: "Emergency",
-      key: "helplines",
-    },
-  ];
-  const kbCards = kb
-    .map((r) => {
-      const viewed = S.kbViewed.includes(r.key);
-      return `
-      <div onclick="markKBViewed('${r.key}')" class="dh-card cursor-pointer transition-shadow hover:shadow-md" style="padding:16px;">
-        <div class="text-2xl mb-2">${r.icon}</div>
-        <span class="kb-chip ${viewed ? "viewed" : ""}">${viewed ? "✓ Read" : r.tag}</span>
-        <p class="font-bold text-slate-800 text-sm mt-1 leading-snug">${r.title}</p>
-        <p class="text-[#006D77] text-xs font-bold mt-2">${viewed ? "Review again →" : "Learn more →"}</p>
-      </div>`;
-    })
-    .join("");
-  const kbHtml = `
-    <div class="dh-card">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-black text-slate-800">📚 Knowledge Base</h3>
-        <span class="text-[10px] font-black text-teal-600 uppercase tracking-wider">${S.kbViewed.length}/${kb.length} Read</span>
-      </div>
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">${kbCards}</div>
-    </div>`;
-
   return `
     ${alertsHtml}
-    <!-- Profile + Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="md:col-span-1">${profileHtml}</div>
-      <div class="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">${statsHtml}</div>
-    </div>
-    <!-- Journal + Action Tools -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-      <div class="lg:col-span-2">${journalHtml}</div>
-      <div>${actionTools}</div>
-    </div>
-    <!-- Conversations + Callback -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-      ${conversationsHtml}
-      ${callbackHtml}
-    </div>
-    <!-- Knowledge Base -->
-    ${kbHtml}`;
+    <!-- Profile -->
+    <div class="mb-6">${profileHtml}</div>
+    <!-- Journal -->
+    <div class="mb-5">${journalHtml}</div>
+    <!-- Conversations -->
+    <div class="mb-5">${conversationsHtml}</div>`;
 }
 
 // ══════════════════════════════════════════════════════════════
