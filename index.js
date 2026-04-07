@@ -17,6 +17,7 @@ const S = {
   calendars: null,
   filter: "all", // all|new|triaged|due_soon|critical|resolved
   kbViewed: JSON.parse(localStorage.getItem("dh_kb_viewed") || "[]"),
+  journalMood: "okay", // overwhelmed|tired|okay|hopeful|good
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -411,7 +412,6 @@ function renderDashboard(user) {
   const convos = S.convos;
   const loading = opps === null;
   const alerts = !loading ? getSafetyAlerts(opps) : [];
-  const filtered = !loading ? getFilteredOpps(opps) : [];
 
   // Counts
   const total = !loading ? opps.length : 0;
@@ -482,84 +482,64 @@ function renderDashboard(user) {
     )
     .join("");
 
-  // ── 📈 Smart Filter Tabs ──────────────────────────────────
-  const newCt = !loading
-    ? opps.filter((op) => getDisplayStatus(op) === "new").length
-    : 0;
-  const triagedCt = !loading
-    ? opps.filter((op) => getDisplayStatus(op) === "triaged").length
-    : 0;
-  const dueSoonCt = !loading ? opps.filter((op) => isDueSoon(op)).length : 0;
-  const filters = [
-    { key: "all", label: `All (${total})` },
-    { key: "new", label: `🆕 New (${newCt})` },
-    { key: "triaged", label: `📋 Triaged (${triagedCt})` },
-    { key: "due_soon", label: `⏰ Due Soon (${dueSoonCt})` },
-    { key: "resolved", label: `✅ Resolved (${resolved})` },
-    {
-      key: "critical",
-      label: `🚨 Critical (${!loading ? alerts.filter((a) => isCritical(a)).length : 0})`,
-    },
+  // ── 📔 Journal / Mood Check-in ───────────────────────────
+  const journalKey = `dh_journal_${user.id}`;
+  const journalEntries = JSON.parse(localStorage.getItem(journalKey) || "[]");
+  const moodDefs = [
+    { key: "overwhelmed", emoji: "😟", label: "Overwhelmed", color: "#f43f5e", ring: "#fecdd3" },
+    { key: "tired",       emoji: "😔", label: "Tired",       color: "#8b5cf6", ring: "#ede9fe" },
+    { key: "okay",        emoji: "😐", label: "Okay",        color: "#94a3b8", ring: "#e2e8f0" },
+    { key: "hopeful",     emoji: "🙂", label: "Hopeful",     color: "#006D77", ring: "#ccfbf1" },
+    { key: "good",        emoji: "😊", label: "Good",        color: "#16a34a", ring: "#dcfce7" },
   ];
-  const filterTabs = filters
-    .map(
-      (f) =>
-        `<button class="filter-btn${S.filter === f.key ? " active" : ""}" onclick="setFilter('${f.key}')">${f.label}</button>`,
-    )
-    .join("");
+  const patientName = user.patientName || "your loved one";
 
-  // ── 📂 Case Details Table ─────────────────────────────────
-  let caseRows = "";
-  if (loading) {
-    caseRows = `<tr><td colspan="5" class="text-center py-10"><div class="spinner mx-auto mb-2"></div><p class="text-slate-400 text-sm">Loading cases from GHL…</p></td></tr>`;
-  } else if (!filtered.length) {
-    caseRows = `<tr><td colspan="5" class="text-center py-10"><div class="text-4xl mb-2">📭</div><p class="text-slate-400 text-sm font-semibold">No cases match this filter.</p></td></tr>`;
-  } else {
-    caseRows = filtered
-      .map((op, i) => {
-        const sla = getSLA(op);
-        const critical = isCritical(op);
-        return `
-        <tr${critical ? ' style="background:#fff9f9;"' : ""}>
-          <td>
-            <div class="flex items-center gap-2">
-              ${critical ? '<span class="text-red-500 text-lg">🚨</span>' : ""}
-              <div>
-                <p class="font-bold text-slate-800 text-sm leading-tight">${esc(op.contact?.name || "Unknown")}</p>
-                <p class="text-[10px] text-slate-400 font-semibold">${esc(op.contact?.phone || op.contact?.email || "")}</p>
-              </div>
-            </div>
-          </td>
-          <td class="max-w-[180px]">
-            <p class="text-xs text-slate-700 font-semibold truncate">${esc(op.name || "—")}</p>
-            <p class="text-[10px] text-slate-400 mt-0.5">${esc(op.pipelineStageName || "")}</p>
-          </td>
-          <td><span class="dh-badge ${sla.cls}">${sla.label}</span><p class="text-[10px] text-slate-400 mt-1">${timeAgo(op.updatedAt)}</p></td>
-          <td class="text-[10px] text-slate-500">${fmtDate(op.createdAt)}</td>
-          <td>
-            <div class="flex gap-1.5 justify-end">
-              <button onclick="openNoteModal(${i})" title="Add Note" class="p-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition text-sm">📝</button>
-              ${op.contact?.phone ? `<a href="tel:${esc(op.contact.phone)}" title="Call" class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-sm">📞</a>` : ""}
-              <button onclick="openCallbackModal(${i})" title="Schedule Callback" class="p-2 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 transition text-sm">📅</button>
-            </div>
-          </td>
-        </tr>`;
-      })
-      .join("");
-  }
+  const moodButtons = moodDefs.map(m => {
+    const active = S.journalMood === m.key;
+    return `
+      <button onclick="setJournalMood('${m.key}')" class="flex flex-col items-center gap-1.5 focus:outline-none">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-150"
+          style="border: 2px solid ${active ? m.color : '#e2e8f0'};
+                 background: ${active ? m.ring : 'transparent'};
+                 transform: ${active ? 'scale(1.12)' : 'scale(1)'};">
+          ${m.emoji}
+        </div>
+        <span class="text-[10px] font-bold transition-colors" style="color:${active ? m.color : '#94a3b8'};">${m.label}</span>
+      </button>`;
+  }).join("");
 
-  const casesHtml = `
+  const recentEntries = journalEntries.slice(-5).reverse().map(e => {
+    const md = moodDefs.find(m => m.key === e.mood) || moodDefs[2];
+    return `
+      <div class="flex items-start gap-3 py-3 border-t border-slate-100">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0"
+          style="background:${md.ring};">${md.emoji}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-center mb-0.5">
+            <span class="text-[10px] font-black uppercase tracking-wider" style="color:${md.color};">${md.label}</span>
+            <span class="text-[10px] text-slate-400 font-semibold">${timeAgo(e.date)}</span>
+          </div>
+          ${e.note ? `<p class="text-xs text-slate-500 leading-relaxed line-clamp-2">${esc(e.note)}</p>` : `<p class="text-xs text-slate-300 italic">No note added.</p>`}
+        </div>
+      </div>`;
+  }).join("");
+
+  const journalHtml = `
     <div class="dh-card">
-      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-        <h2 class="font-black text-slate-800">📂 Case Details</h2>
-        <div class="flex flex-wrap gap-2">${filterTabs}</div>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="dh-table">
-          <thead><tr><th>Contact</th><th>Opportunity</th><th>SLA Status</th><th>Created</th><th class="text-right">Actions</th></tr></thead>
-          <tbody>${caseRows}</tbody>
-        </table>
-      </div>
+      <h3 class="font-black text-slate-800 mb-0.5">📔 How are YOU feeling right now?</h3>
+      <p class="text-xs font-semibold mb-5" style="color:#006D77;">Check in with yourself — not just with ${esc(patientName)}.</p>
+      <div class="flex justify-between mb-5">${moodButtons}</div>
+      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">What's on your mind? <span class="normal-case font-semibold text-slate-400">(private)</span></label>
+      <textarea id="journalNote" class="dh-input resize-none mb-4" rows="3"
+        placeholder="Vent freely here — this is just for you…"></textarea>
+      <button onclick="saveJournalEntry('${user.id}')" id="journalSaveBtn" class="dh-btn-primary w-full"
+        style="background:linear-gradient(135deg,#006D77,#003D44);">Save my check-in</button>
+      <div id="journalSaveResult" class="mt-2 text-xs text-center font-semibold text-teal-600 hidden">✓ Check-in saved</div>
+      ${journalEntries.length ? `
+        <div class="mt-2">
+          <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0">Recent Check-ins</p>
+          ${recentEntries}
+        </div>` : ""}
     </div>`;
 
   // ── 🛠 Action Tools ───────────────────────────────────────
@@ -567,11 +547,9 @@ function renderDashboard(user) {
     <div class="dh-card h-fit">
       <h3 class="font-black text-slate-800 mb-4 text-sm">🛠 Action Tools</h3>
       <div class="space-y-2">
-        <button onclick="openNoteModal(null)" class="action-btn"><span class="text-lg">📝</span><div class="text-left"><p class="font-bold text-sm leading-tight">Add Case Note</p><p class="text-[10px] text-slate-400 mt-0.5">Sync to GHL contact</p></div></button>
         <button onclick="openCallbackModal(null)" class="action-btn"><span class="text-lg">📅</span><div class="text-left"><p class="font-bold text-sm leading-tight">Schedule Callback</p><p class="text-[10px] text-slate-400 mt-0.5">Book via GHL calendar</p></div></button>
         <a href="tel:1800-867-3377" class="action-btn"><span class="text-lg">📞</span><div class="text-left"><p class="font-bold text-sm leading-tight">Emergency Helpline</p><p class="text-[10px] text-slate-400 mt-0.5">1800-867-3377</p></div></a>
         <a href="tel:995" class="action-btn danger"><span class="text-lg">🚑</span><div class="text-left"><p class="font-bold text-sm leading-tight">Call 995 — Emergency</p><p class="text-[10px] text-slate-400 mt-0.5">Life-threatening only</p></div></a>
-        <button onclick="document.getElementById('voice-ai-widget').scrollIntoView({behavior:'smooth'})" class="action-btn"><span class="text-lg">🎙️</span><div class="text-left"><p class="font-bold text-sm leading-tight">Voice AI Assistant</p><p class="text-[10px] text-slate-400 mt-0.5">24/7 support available</p></div></button>
       </div>
       <div class="mt-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
         <p class="text-[10px] font-black text-teal-700 uppercase tracking-wider mb-1">System Status</p>
@@ -709,9 +687,9 @@ function renderDashboard(user) {
       <div class="md:col-span-1">${profileHtml}</div>
       <div class="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">${statsHtml}</div>
     </div>
-    <!-- Cases + Action Tools -->
+    <!-- Journal + Action Tools -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-      <div class="lg:col-span-2">${casesHtml}</div>
+      <div class="lg:col-span-2">${journalHtml}</div>
       <div>${actionTools}</div>
     </div>
     <!-- Conversations + Callback -->
@@ -729,6 +707,32 @@ function renderDashboard(user) {
 function setFilter(f) {
   S.filter = f;
   render();
+}
+
+function setJournalMood(mood) {
+  S.journalMood = mood;
+  // Preserve any note already typed before re-render
+  const existingNote = document.getElementById("journalNote")?.value || "";
+  render();
+  const noteEl = document.getElementById("journalNote");
+  if (noteEl && existingNote) noteEl.value = existingNote;
+}
+
+function saveJournalEntry(userId) {
+  const noteEl = document.getElementById("journalNote");
+  const note = noteEl ? noteEl.value.trim() : "";
+  const key = `dh_journal_${userId}`;
+  const entries = JSON.parse(localStorage.getItem(key) || "[]");
+  entries.push({ id: Date.now().toString(), mood: S.journalMood, note, date: new Date().toISOString() });
+  localStorage.setItem(key, JSON.stringify(entries));
+  S.journalMood = "okay";
+  render();
+  // Flash confirmation
+  const saved = document.getElementById("journalSaveResult");
+  if (saved) {
+    saved.classList.remove("hidden");
+    setTimeout(() => saved.classList.add("hidden"), 3000);
+  }
 }
 
 function markKBViewed(key) {
