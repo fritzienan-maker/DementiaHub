@@ -6,6 +6,7 @@ const CFG = {
   // All GHL calls go through /api/ghl via window.DHAPI.
   locationId: "Idf9v4q6aqh5KhzXip6e",
   elevenLabsAgentId: "YOUR_ELEVENLABS_AGENT_ID", // ← replace with your ElevenLabs Conversational AI agent ID
+  logo: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23006D77' width='100' height='100'/%3E%3Ctext x='50' y='65' font-size='80' font-weight='bold' fill='white' text-anchor='middle'%3EDH%3C/text%3E%3C/svg%3E",
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -19,6 +20,11 @@ const S = {
   kbViewed: JSON.parse(localStorage.getItem("dh_kb_viewed") || "[]"),
   journalMood: "okay", // overwhelmed|tired|okay|hopeful|good
 };
+
+// ══════════════════════════════════════════════════════════════
+// RESOURCES TAB STATE
+// ══════════════════════════════════════════════════════════════
+let resourceTab = localStorage.getItem("dh_resource_tab") || "emergency";
 
 // ══════════════════════════════════════════════════════════════
 // GHL API HELPERS — proxied securely via /api/ghl (DHAPI)
@@ -1049,8 +1055,13 @@ function copyToClipboard(text) {
     .catch(() => alert("Failed to copy"));
 }
 
+window.setResourceTab = function(tab) {
+  resourceTab = tab;
+  localStorage.setItem("dh_resource_tab", tab);
+  render();
+};
+
 function renderResources() {
-  // Emergency helplines — rendered separately with special design
   const emergency = [
     {
       icon: "🚑",
@@ -1338,7 +1349,7 @@ function renderResources() {
   });
   html += `</div></div>`;
 
-  // ── OTHER RESOURCE SECTIONS ──
+  // ── COLOR SCHEMES FOR SECTIONS ──
   const colorSchemes = {
     purple: {bg: 'bg-purple-50', border: 'border-purple-200', icon: 'text-purple-600', link: 'text-purple-700', tag: 'bg-purple-100 text-purple-700', hover: 'hover:bg-purple-100', accent: 'text-purple-600'},
     blue: {bg: 'bg-blue-50', border: 'border-blue-200', icon: 'text-blue-600', link: 'text-blue-700', tag: 'bg-blue-100 text-blue-700', hover: 'hover:bg-blue-100', accent: 'text-blue-600'},
@@ -1346,40 +1357,194 @@ function renderResources() {
     emerald: {bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'text-emerald-600', link: 'text-emerald-700', tag: 'bg-emerald-100 text-emerald-700', hover: 'hover:bg-emerald-100', accent: 'text-emerald-600'},
     cyan: {bg: 'bg-cyan-50', border: 'border-cyan-200', icon: 'text-cyan-600', link: 'text-cyan-700', tag: 'bg-cyan-100 text-cyan-700', hover: 'hover:bg-cyan-100', accent: 'text-cyan-600'},
   };
-  
-  sections.forEach((sec) => {
-    const colors = colorSchemes[sec.color] || colorSchemes.purple;
-    html += `<div class="mb-8">
-      <div class="mb-5 pb-4 border-b-2 ${colors.border}">
-        <h2 class="text-xl font-black ${colors.accent} mb-1">${sec.title}</h2>
-        <p class="text-slate-500 text-sm font-medium">${sec.desc}</p>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    
-    sec.items.forEach((item) => {
-      const urlDisplay = item.link.replace('https://', '').replace('http://', '').split('/')[0];
-      html += `
-        <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
-          <div class="flex items-start justify-between mb-3">
-            <span class="text-3xl">${item.icon}</span>
-            <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.tag}</span>
-          </div>
-          <h3 class="font-black text-slate-800 mb-2 text-sm leading-snug">${item.name}</h3>
-          <p class="text-slate-500 text-xs leading-relaxed mb-3">${item.text}</p>
-          <div class="${colors.bg} rounded-lg p-3 mb-3 border ${colors.border}">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Details</p>
-            <p class="text-[10px] text-slate-600 font-semibold mb-1">${item.info}</p>
-            <p class="text-[10px] ${colors.link} font-bold truncate">↗ ${urlDisplay}</p>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold ${colors.link} group-hover:underline">Open →</span>
-            <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" title="Copy link" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
-          </div>
-        </div>`;
-    });
-    html += `</div></div>`;
-  });
 
+  // ── TAB NAVIGATION ──
+  html += `<div class="mb-8">
+    <div class="flex flex-wrap gap-2 mb-6 pb-4 border-b-2 border-slate-200">
+      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'emergency' ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('emergency')">🆘 Quick Help</button>
+      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'cara' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('cara')">📱 CARA Platform</button>
+      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'dementiahub' ? 'bg-orange-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('dementiahub')">📚 DementiaHub</button>
+      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'dementiasgt' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('dementiasgt')">🏥 Dementia SG</button>
+    </div>
+  </div>`;
+
+  // ── TAB CONTENT ──
+  if (resourceTab === 'emergency') {
+    // Quick Help Tab - Critical resources for immediate needs
+    html += sections.slice(0, 3).map(sec => {
+      const colors = colorSchemes[sec.color] || colorSchemes.purple;
+      return `<div class="mb-8">
+        <div class="mb-5 pb-4 border-b-2 ${colors.border}">
+          <h2 class="text-xl font-black ${colors.accent} mb-1">${sec.title}</h2>
+          <p class="text-slate-500 text-sm font-medium">${sec.desc}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${sec.items.map(item => {
+            const urlDisplay = item.link.replace('https://', '').replace('http://', '').split('/')[0];
+            return `
+            <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
+              <div class="flex items-start justify-between mb-3">
+                <span class="text-3xl">${item.icon}</span>
+                <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.tag}</span>
+              </div>
+              <h3 class="font-black text-slate-800 mb-2 text-sm leading-snug">${item.name}</h3>
+              <p class="text-slate-500 text-xs leading-relaxed mb-3">${item.text}</p>
+              <div class="${colors.bg} rounded-lg p-3 mb-3 border ${colors.border}">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Details</p>
+                <p class="text-[10px] text-slate-600 font-semibold mb-1">${item.info}</p>
+                <p class="text-[10px] ${colors.link} font-bold truncate">↗ ${urlDisplay}</p>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold ${colors.link} group-hover:underline">Open →</span>
+                <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" title="Copy link" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  } 
+  else if (resourceTab === 'cara') {
+    // CARA Tab - Digital platform features
+    html += `
+      <div class="mb-8">
+        <div class="mb-5 pb-4 border-b-2 border-blue-200">
+          <h2 class="text-2xl font-black text-blue-600 mb-2">📱 CARA — Digital Companion for Dementia Care</h2>
+          <p class="text-slate-600 text-sm font-medium">Free lifestyle and community platform by Dementia Singapore. Available on iOS and Android.</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div class="dh-card bg-blue-50 border-2 border-blue-200">
+            <h3 class="font-black text-blue-700 text-lg mb-3">🎯 About CARA</h3>
+            <p class="text-slate-700 text-sm mb-4">CARA is an initiative by Dementia Singapore, supported by NCSS and AIC. It provides easy access for persons living with dementia and caregivers to connect to an ecosystem of digital solutions and community support.</p>
+            <div class="space-y-2">
+              <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">✓ Free Membership</span>
+              <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full ml-2">✓ iOS & Android</span>
+            </div>
+          </div>
+          <div class="dh-card bg-cyan-50 border-2 border-cyan-200">
+            <h3 class="font-black text-cyan-700 text-lg mb-3">✨ Key Features</h3>
+            <ul class="text-sm text-slate-700 space-y-2">
+              <li>🛡️ <strong>Safe Return Program:</strong> Locate loved ones with dementia</li>
+              <li>👥 <strong>Community Alerts:</strong> Notify network immediately</li>
+              <li>🎁 <strong>Partner Rewards:</strong> Exclusive benefits from providers</li>
+              <li>📚 <strong>Resources Hub:</strong> Professional dementia information</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="dh-card border-2 border-blue-100 hover:border-blue-300 transition">
+            <h3 class="font-black text-slate-800 mb-3 text-base">🔍 Safe Return Program</h3>
+            <p class="text-slate-600 text-sm mb-3">Community-powered safety net. Get alerts if a loved one goes missing and help reunite other families through the CARA network.</p>
+            <button class="text-blue-600 font-bold text-sm hover:underline" onclick="openResourceLink('https://cara.sg/safe-return-guide/')">Learn More →</button>
+          </div>
+          <div class="dh-card border-2 border-blue-100 hover:border-blue-300 transition">
+            <h3 class="font-black text-slate-800 mb-3 text-base">🤝 Partners Program</h3>
+            <p class="text-slate-600 text-sm mb-3">Access exclusive rewards and offers from dementia-friendly businesses. Save money and make caregiving easier.</p>
+            <button class="text-blue-600 font-bold text-sm hover:underline" onclick="openResourceLink('https://cara.sg/partners/')">Explore Partners →</button>
+          </div>
+        </div>
+        
+        <div class="dh-card border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-6">
+          <h3 class="font-black text-blue-700 mb-3 text-lg">📲 Download CARA App Today</h3>
+          <p class="text-slate-700 text-sm mb-4">Join thousands of families in Singapore using CARA to stay connected and safe. Your membership is completely free.</p>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="openResourceLink('https://play.google.com/store/apps/details?id=com.embreo.carasg')" class="bg-green-500 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-green-600 transition">📱 Google Play</button>
+            <button onclick="openResourceLink('https://apps.apple.com/sg/app/cara-sg/id1553855834')" class="bg-gray-900 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-gray-800 transition">🍎 App Store</button>
+            <button onclick="openResourceLink('https://cara.sg/join-now/')" class="bg-blue-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">🌐 Join Online</button>
+          </div>
+        </div>
+      </div>`;
+  }
+  else if (resourceTab === 'dementiahub') {
+    // DementiaHub Tab - Portal for different user types
+    html += `
+      <div class="mb-8">
+        <div class="mb-5 pb-4 border-b-2 border-orange-200">
+          <h2 class="text-2xl font-black text-orange-600 mb-2">📚 DementiaHub — Singapore's Comprehensive Resource Portal</h2>
+          <p class="text-slate-600 text-sm font-medium">One-stop resource site with articles, guides, and practical advice. Browse by your role and situation:</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/i-live-with-dementia/')">
+            <h3 class="font-black text-slate-800 mb-2 text-base">🧠 I Live with Dementia</h3>
+            <p class="text-slate-600 text-sm mb-3">Resources for persons living with dementia. Learn about stages, signs, self-advocacy, maintaining independence, and staying active in the community.</p>
+            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+          </div>
+          
+          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/my-loved-one-has-dementia/')">
+            <h3 class="font-black text-slate-800 mb-2 text-base">❤️ My Loved One has Dementia</h3>
+            <p class="text-slate-600 text-sm mb-3">Comprehensive guides for family caregivers. Communication tips, daily care routines, handling difficult behaviors, and managing health.</p>
+            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+          </div>
+          
+          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/general-public/')">
+            <h3 class="font-black text-slate-800 mb-2 text-base">👫 I Want to Play a Part</h3>
+            <p class="text-slate-600 text-sm mb-3">For community members and volunteers. Learn how to create a dementia-inclusive environment and contribute to awareness.</p>
+            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+          </div>
+          
+          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/care-professional/')">
+            <h3 class="font-black text-slate-800 mb-2 text-base">👨‍⚕️ I am a Care Professional</h3>
+            <p class="text-slate-600 text-sm mb-3">For healthcare workers and care professionals. Clinical insights, best practices, and professional resources.</p>
+            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+          </div>
+        </div>
+        
+        <div class="dh-card border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+          <h3 class="font-black text-slate-800 mb-3 text-base">💬 Professional Counselling for Caregivers</h3>
+          <p class="text-slate-600 text-sm mb-4">Emotional support matters. Professional counsellors provide guidance, coping strategies, and personalized support for caregivers at every stage of the journey.</p>
+          <button onclick="openResourceLink('https://www.dementiahub.sg/dementia/counselling-for-caregivers/')" class="bg-orange-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-orange-700 transition">Learn More →</button>
+        </div>
+      </div>`;
+  }
+  else if (resourceTab === 'dementiasgt') {
+    // Dementia Singapore Tab - Services directory and programs
+    html += sections.slice(3).map(sec => {
+      const colors = colorSchemes[sec.color] || colorSchemes.emerald;
+      return `<div class="mb-8">
+        <div class="mb-5 pb-4 border-b-2 ${colors.border}">
+          <h2 class="text-xl font-black ${colors.accent} mb-1">${sec.title}</h2>
+          <p class="text-slate-500 text-sm font-medium">${sec.desc}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${sec.items.map(item => {
+            const urlDisplay = item.link.replace('https://', '').replace('http://', '').split('/')[0];
+            return `
+            <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
+              <div class="flex items-start justify-between mb-3">
+                <span class="text-3xl">${item.icon}</span>
+                <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.tag}</span>
+              </div>
+              <h3 class="font-black text-slate-800 mb-2 text-sm leading-snug">${item.name}</h3>
+              <p class="text-slate-500 text-xs leading-relaxed mb-3">${item.text}</p>
+              <div class="${colors.bg} rounded-lg p-3 mb-3 border ${colors.border}">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Details</p>
+                <p class="text-[10px] text-slate-600 font-semibold mb-1">${item.info}</p>
+                <p class="text-[10px] ${colors.link} font-bold truncate">↗ ${urlDisplay}</p>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold ${colors.link} group-hover:underline">Open →</span>
+                <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" title="Copy link" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    
+    html += `<div class="mt-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-200">
+      <h3 class="font-black text-emerald-900 mb-4 text-lg">🌍 About Dementia Singapore</h3>
+      <p class="text-slate-700 text-sm mb-4">Dementia Singapore (formerly Alzheimer's Disease Association) is Singapore's leading specialist Social Service Agency in dementia care. We're dedicated to creating a dementia-inclusive society through Care Innovation, Advocacy, and Empowerment.</p>
+      <div class="flex flex-wrap gap-3">
+        <button onclick="openResourceLink('https://dementia.org.sg/volunteer/')" class="bg-emerald-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-emerald-700 transition">✋ Volunteer</button>
+        <button onclick="openResourceLink('https://dementia.org.sg/donate/')" class="bg-red-500 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-red-600 transition">❤️ Donate</button>
+        <button onclick="openResourceLink('https://dementia.org.sg/vod/')" class="bg-blue-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">📰 Newsletter</button>
+      </div>
+    </div>`;
+  }
+  
+  // ── CRISIS BANNER (shown in all tabs) ──
   html += `<div class="mt-8 p-6 bg-gradient-to-r from-red-50 via-orange-50 to-red-50 rounded-2xl border-2 border-red-200"><div class="flex items-start gap-4"><div class="text-3xl mt-1">🆘</div><div class="flex-1"><h3 class="font-black text-red-900 text-lg mb-1">Life-Threatening or Immediate Crisis?</h3><p class="text-red-800 text-sm font-semibold mb-3">Don't wait — call 999 immediately. Every second counts.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div class="bg-white rounded-lg p-4 border border-red-200 cursor-pointer hover:bg-red-50 transition" onclick="openResourceLink('tel:999')"><p class="font-black text-red-700 text-2xl mb-1">🚑 999</p><p class="text-xs text-slate-500 font-semibold">Ambulance • Police • Fire</p></div><div class="bg-white rounded-lg p-4 border border-teal-200 cursor-pointer hover:bg-teal-50 transition" onclick="openResourceLink('tel:6377-0700')"><p class="font-black text-teal-700 text-lg mb-1">📞 6377 0700</p><p class="text-xs text-slate-500 font-semibold">Dementia Helpline • Mon-Fri 9-6pm</p></div></div></div></div></div>`;
 
   return html;
