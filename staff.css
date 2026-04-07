@@ -61,6 +61,7 @@ body{margin:0;background:#F0F4F8;}
 .badge-completed{background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;}
 .badge-new{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;}
 .badge-inprogress{background:#ede9fe;color:#5b21b6;border:1px solid #ddd6fe;}
+.badge-urgent{background:#fff1f2;color:#be123c;border:1px solid #fda4af;animation:flashbadge 1.2s ease-in-out infinite;}
 
 /* ── Case Detail Modal ── */
 .case-detail-overlay{position:fixed;inset:0;background:rgba(0,40,50,.65);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:flex-start;justify-content:flex-end;padding:0;}
@@ -68,7 +69,8 @@ body{margin:0;background:#F0F4F8;}
 .case-detail-header{background:linear-gradient(135deg,#003D44,#006D77);padding:24px 28px;flex-shrink:0;}
 .cd-section{padding:20px 28px;border-bottom:1px solid #f1f5f9;}
 .cd-label{font-size:9.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
-.transcript-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:16px;font-size:12.5px;line-height:1.7;color:#374151;max-height:220px;overflow-y:auto;font-family:monospace;}
+.transcript-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:16px;font-size:12.5px;line-height:1.7;color:#374151;max-height:380px;overflow-y:auto;}
+.transcript-box .transcript-empty{text-align:center;color:#94a3b8;font-size:13px;padding:24px 0;}
 .ai-insight-box{border-radius:14px;padding:14px 16px;}
 .ai-summary{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;}
 .ai-intent{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;}

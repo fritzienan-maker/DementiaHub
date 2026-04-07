@@ -11,6 +11,22 @@ const CFG = {
 
 const STAFF_LIST = ['Case Manager Wibiz','DementiaSG Admin','Helpline Staff Wibiz','Read-only Analyst Wibiz','Unassigned'];
 const ROLES      = ['Case Manager Wibiz','DementiaSG Admin','Helpline Staff Wibiz','Read-only Analyst Wibiz'];
+const CASE_STATUSES = [
+  'New - Untriaged',
+  'Self-Serve Resolved',
+  'Needs Staff - Awaiting Contact',
+  'Escalation \u2013 No Staff Available',
+  'In Progress',
+  'Callback Scheduled',
+  'Scheduled / Follow Up',
+  'Referred / Redirected',
+  'Closed - Resolved',
+  'Closed - Unreachable',
+  'Urgent - Immediate Action',
+];
+// Which full statuses map to the simplified 'resolved' / 'triaged' display buckets
+const _RESOLVED_STATUSES = new Set(['Self-Serve Resolved','Closed - Resolved','Closed - Unreachable','Referred / Redirected']);
+const _TRIAGED_STATUSES  = new Set(['In Progress','Needs Staff - Awaiting Contact','Callback Scheduled','Scheduled / Follow Up','Escalation \u2013 No Staff Available']);
 
 // ── Role helpers ──────────────────────────────────────────────
 function currentRole(){ return getCurrentStaff()?.staffRole || ''; }
@@ -27,12 +43,13 @@ function roleAccessControl(enrichedList){
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let ghlOpps    = null;  // null=loading
+let ghlOpps      = null;  // null=loading
 let activeFilter = 'all';
 let searchQuery  = '';
 let sortCol      = 'updated';
 let sortDir      = 'desc';
 let activeChatIdx = 0;
+let selectedCaseId = null; // tracks which case detail panel is open
 let assignments  = JSON.parse(localStorage.getItem('dsg_assignments') || '{}');
 let callbacks    = JSON.parse(localStorage.getItem('dsg_callbacks') || '[]');
 let caseStatuses = JSON.parse(localStorage.getItem('dsg_case_statuses') || '{}');
@@ -66,7 +83,7 @@ function getCurrentStaff(){
 // ROUTING
 // ════════════════════════════════════════════════════════════
 function getView(){ return location.hash.replace('#','')||'overview'; }
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', () => { selectedCaseId = null; render(); });
 
 // ════════════════════════════════════════════════════════════
 // GHL API — proxied securely via /api/ghl (DHAPI)
@@ -132,9 +149,15 @@ function enrich(op, idx){
   const localStatus = caseStatuses[op.id];
   let displayStatus = 'new';
   if (localStatus) {
-    const ls = localStatus.toLowerCase().replace(/\s+/g,'');
-    if      (ls === 'resolved')              displayStatus = 'resolved';
-    else if (ls === 'inprogress' || ls === 'triaged') displayStatus = 'triaged';
+    if      (_RESOLVED_STATUSES.has(localStatus)) displayStatus = 'resolved';
+    else if (_TRIAGED_STATUSES.has(localStatus))  displayStatus = 'triaged';
+    else if (localStatus === 'Urgent - Immediate Action') displayStatus = 'critical';
+    else {
+      // Legacy values stored before CASE_STATUSES was introduced
+      const ls = localStatus.toLowerCase().replace(/\s+/g,'');
+      if      (ls === 'resolved')                          displayStatus = 'resolved';
+      else if (ls === 'inprogress' || ls === 'triaged')    displayStatus = 'triaged';
+    }
   } else {
     const stage = (op.pipelineStageName || '').toLowerCase();
     const ghlSt = (op.status || '').toLowerCase();
@@ -190,6 +213,8 @@ function render(){
   const app=document.getElementById('app');
   if(!isAuth()){ app.innerHTML=renderLogin(); document.getElementById('loginForm').addEventListener('submit',handleLogin); return; }
   app.innerHTML=renderShell(getView());
+  // Re-open case detail if it was open before this re-render
+  if(selectedCaseId) openCaseDetail(selectedCaseId);
 }
 
 function handleLogin(e){
@@ -564,8 +589,13 @@ function renderCases(enriched){
         : cbDone ? `<span class="badge badge-completed">✓ Done</span>`
         : '<span class="badge badge-pending">Pending</span>';
       const consentBadge = op.consent===false ? '<span class="badge badge-no">No</span>' : '<span class="badge badge-yes">Yes</span>';
-      const statusLabel = op.displayStatus==='resolved'?'Resolved':op.displayStatus==='triaged'?'Triaged':'New';
-      const statusClass = op.displayStatus==='resolved'?'badge-resolved':op.displayStatus==='triaged'?'badge-inprogress':'badge-new';
+      const _storedStatus = caseStatuses[op.id] || '';
+      const statusLabel = _storedStatus && CASE_STATUSES.includes(_storedStatus)
+        ? _storedStatus.replace(' - ',' ').replace(' / ',' / ').replace(' \u2013 ',' – ')
+        : (op.displayStatus==='resolved'?'Closed - Resolved':op.displayStatus==='triaged'?'In Progress':'New - Untriaged');
+      const statusClass = op.displayStatus==='resolved'?'badge-resolved'
+        :op.displayStatus==='critical'?'badge-urgent'
+        :op.displayStatus==='triaged'?'badge-inprogress':'badge-new';
       const callDate = op.createdAt ? fmtDate(op.createdAt) : '—';
       return `
         <tr id="row-${op.id}" style="${op.urgency==='critical'?'background:#fff8f8;cursor:pointer;':'cursor:pointer;'}transition:opacity .25s;" onclick="openCaseDetail('${op.id}')">
@@ -605,16 +635,8 @@ function renderCases(enriched){
           <span class="text-slate-400 text-sm">🔍</span>
           <input type="text" placeholder="Search cases…" value="${esc(searchQuery)}" oninput="searchQuery=this.value;render()" class="outline-none text-sm bg-transparent w-40 placeholder:text-slate-400">
         </div>
-        <select class="dh-select" onchange="setFilter(this.value)">
-          <option value="all"       ${activeFilter==='all'?'selected':''}>All Cases</option>
-          <option value="new"       ${activeFilter==='new'?'selected':''}>🆕 New</option>
-          <option value="triaged"   ${activeFilter==='triaged'?'selected':''}>📋 Triaged</option>
-          <option value="due_soon"  ${activeFilter==='due_soon'?'selected':''}>⏰ Due Soon</option>
-          <option value="resolved"  ${activeFilter==='resolved'?'selected':''}>✅ Resolved</option>
-          <option value="critical"  ${activeFilter==='critical'?'selected':''}>🔴 Critical</option>
-          <option value="sla_breach" ${activeFilter==='sla_breach'?'selected':''}>🕐 SLA Breached</option>
-        </select>
-        <button onclick="fetchGHL()" class="dh-btn dh-btn-ghost dh-btn-sm">🔄</button>
+        <button onclick="setFilter('all');searchQuery='';render()" class="dh-btn dh-btn-ghost">↺ Reset Filters</button>
+        <button onclick="fetchGHL()" class="dh-btn dh-btn-ghost">🔄 Refresh</button>
       </div>
     </div>
 
@@ -1117,13 +1139,76 @@ function useAISuggestionFromModal(idx){
 }
 
 // ════════════════════════════════════════════════════════════
+// TRANSCRIPT RENDERER
+// ════════════════════════════════════════════════════════════
+function renderTranscript(transcriptData){
+  if(!transcriptData || (typeof transcriptData==='string' && !transcriptData.trim())){
+    return '<p class="text-slate-400 text-sm italic text-center py-6">No transcript available for this call.</p>';
+  }
+
+  // Try to parse as JSON array (ElevenLabs structured format)
+  let parsed = null;
+  if(typeof transcriptData==='string'){
+    try{ parsed = JSON.parse(transcriptData); }catch(e){}
+  } else if(Array.isArray(transcriptData)){
+    parsed = transcriptData;
+  }
+
+  if(Array.isArray(parsed) && parsed.length){
+    return parsed.map(entry => {
+      const role = (entry.role || entry.speaker || '').toLowerCase();
+      const text = entry.message || entry.text || entry.content || '';
+      const isAgent = role.includes('agent') || role.includes('assistant') || role.includes('ai') || role.includes('bot');
+      const label = isAgent ? 'Agent' : 'Caller';
+      const bg    = isAgent ? 'bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-200';
+      const lc    = isAgent ? 'text-blue-700' : 'text-slate-500';
+      const ts    = entry.timestamp || entry.time_in_call_secs != null ? ` · ${typeof entry.time_in_call_secs==='number' ? Math.floor(entry.time_in_call_secs)+'s' : fmtShort(entry.timestamp)}` : '';
+      return `<div class="p-3 rounded-xl border ${bg} mb-2">
+        <p class="text-[10px] font-black uppercase tracking-wide ${lc} mb-1">[${label}]${ts}</p>
+        <p class="text-sm text-slate-700 leading-relaxed">${esc(text)}</p>
+      </div>`;
+    }).join('');
+  }
+
+  // Plain text — detect [Agent]: / [Caller]: labels or just format as plain
+  const lines = String(transcriptData).split('\n');
+  const hasLabels = lines.some(l=>/^\[?(agent|caller|ai|user|human|caregiver)\]?[:：]/i.test(l.trim()));
+  if(hasLabels){
+    return lines.map(line => {
+      if(!line.trim()) return '';
+      const agentM  = line.match(/^\[?(agent|ai|bot|assistant)\]?[:：]\s*/i);
+      const callerM = line.match(/^\[?(caller|user|human|caregiver)\]?[:：]\s*/i);
+      if(agentM){
+        return `<div class="p-3 rounded-xl border bg-blue-50 border-blue-100 mb-2">
+          <p class="text-[10px] font-black uppercase tracking-wide text-blue-700 mb-1">[Agent]</p>
+          <p class="text-sm text-slate-700 leading-relaxed">${esc(line.slice(agentM[0].length))}</p>
+        </div>`;
+      } else if(callerM){
+        return `<div class="p-3 rounded-xl border bg-slate-50 border-slate-200 mb-2">
+          <p class="text-[10px] font-black uppercase tracking-wide text-slate-500 mb-1">[Caller]</p>
+          <p class="text-sm text-slate-700 leading-relaxed">${esc(line.slice(callerM[0].length))}</p>
+        </div>`;
+      }
+      return `<p class="text-sm text-slate-600 leading-relaxed py-1 px-1">${esc(line)}</p>`;
+    }).filter(Boolean).join('');
+  }
+
+  // Fallback: plain pre-formatted text
+  return `<p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">${esc(String(transcriptData))}</p>`;
+}
+
+// ════════════════════════════════════════════════════════════
 // CASE DETAIL PANEL
 // ════════════════════════════════════════════════════════════
 function openCaseDetail(oppId){
+  selectedCaseId = oppId;
   const idx = (ghlOpps||[]).findIndex(o=>o.id===oppId);
   if(idx<0) return;
   const op  = enrich(ghlOpps[idx], idx);
-  const csKey    = caseStatuses[oppId] || 'New';
+  // Normalize legacy status values to the canonical CASE_STATUSES list
+  const _rawStatus = caseStatuses[oppId] || '';
+  const _legacyMap = {'New':'New - Untriaged','In Progress':'In Progress','Resolved':'Closed - Resolved','Triaged':'In Progress'};
+  const csKey = CASE_STATUSES.includes(_rawStatus) ? _rawStatus : (_legacyMap[_rawStatus] || 'New - Untriaged');
   const cbDone   = cbStatuses[oppId]?.done;
   const cbTs     = cbStatuses[oppId]?.ts;
   const notes    = caseNotes[oppId] || '';
@@ -1132,13 +1217,11 @@ function openCaseDetail(oppId){
   const recAction  = {critical:'Escalate immediately — assign senior staff and notify family.',medium:'Schedule follow-up call within 2 hours. Monitor for changes.',low:'Standard response — review at next shift check-in.',high:'Priority response — follow up within 1 hour.'}[op.urgency] || 'Review case details.';
   const kbArticle  = {Safety:'Home Safety & Fall Prevention',Medical:'Medication Management for Dementia',Emotional:'Managing Behavioural Changes',Admin:'CARA Registration Guide',Resource:'SG Dementia Resources Directory'}[op.category]||'Understanding Dementia';
 
-  // Simulate transcript / ai_summary from op fields
-  const transcript = op.transcript || op.description || `[Call transcript not available for ${esc(op.caseId)}. Fetch from GHL custom field "transcript".]`;
   const aiSummary  = op.ai_summary  || op.name || `AI analysis: Caller ${esc(op.contact?.name||'Unknown')} reported a ${op.urgency}-priority concern related to ${op.category}. Intent detected: ${op.intent}.`;
 
   document.getElementById('modal-root').innerHTML=`
   <div class="case-detail-overlay" id="caseDetailOverlay" onclick="if(event.target===this)closeCaseDetail()">
-    <div class="case-detail-panel">
+    <div class="case-detail-panel" onclick="event.stopPropagation()">
       <!-- Header -->
       <div class="case-detail-header">
         <div class="flex items-center gap-3 mb-3">
@@ -1210,7 +1293,7 @@ function openCaseDetail(oppId){
       <!-- Transcript -->
       <div class="cd-section">
         <p class="cd-label mb-2">Full Call Transcript</p>
-        <div class="transcript-box">${esc(transcript)}</div>
+        <div class="transcript-box">${renderTranscript(op.transcript || op.description)}</div>
       </div>
 
       <!-- Staff Action Panel -->
@@ -1220,7 +1303,7 @@ function openCaseDetail(oppId){
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Case Status</label>
             <select id="cdStatus" class="dh-select w-full">
-              ${['New','In Progress','Resolved'].map(s=>`<option ${csKey===s?'selected':''}>${s}</option>`).join('')}
+              ${CASE_STATUSES.map(s=>`<option ${csKey===s?'selected':''}>${esc(s)}</option>`).join('')}
             </select>
           </div>
           <div>
@@ -1245,13 +1328,13 @@ function openCaseDetail(oppId){
   </div>`;
 }
 
-function closeCaseDetail(){ document.getElementById('modal-root').innerHTML=''; }
+function closeCaseDetail(){ selectedCaseId = null; document.getElementById('modal-root').innerHTML=''; }
 
 function updateCaseStatus(oppId, status){
   caseStatuses[oppId] = status;
   localStorage.setItem('dsg_case_statuses', JSON.stringify(caseStatuses));
-  console.log('[updateCaseStatus]', oppId, '→', status,
-    '| resolved total:', Object.values(caseStatuses).filter(s=>s.toLowerCase().replace(/\s+/g,'') === 'resolved').length);
+  const resolvedCount = Object.values(caseStatuses).filter(s=>_RESOLVED_STATUSES.has(s)).length;
+  console.log('[updateCaseStatus]', oppId, '→', status, '| resolved total:', resolvedCount);
 }
 
 function saveCaseAction(oppId, idx){
@@ -1259,20 +1342,19 @@ function saveCaseAction(oppId, idx){
   const assign = document.getElementById('cdAssign').value;
   const notes  = document.getElementById('cdNotes').value.trim();
 
-  // Update state + persist
   updateCaseStatus(oppId, status);
   assignments[oppId] = assign;
   if(notes) caseNotes[oppId] = notes;
   localStorage.setItem('dsg_assignments', JSON.stringify(assignments));
   localStorage.setItem('dsg_case_notes',  JSON.stringify(caseNotes));
 
-  const msg = document.getElementById('cdSaveMsg');
-  if(msg){ msg.classList.remove('hidden'); setTimeout(()=>msg.classList.add('hidden'),2500); }
-
-  // Re-render shell so all counters (Overview + Case Management) reflect new status
-  render();
-  // Re-open detail panel so the status dropdown shows updated value
-  setTimeout(()=>openCaseDetail(oppId), 50);
+  // Refresh panel only — avoids full re-render which would close the panel
+  openCaseDetail(oppId);
+  // Show save confirmation in the freshly rendered panel
+  setTimeout(() => {
+    const msg = document.getElementById('cdSaveMsg');
+    if(msg){ msg.classList.remove('hidden'); setTimeout(()=>msg.classList.add('hidden'),2500); }
+  }, 0);
 }
 
 function markCallbackDone(oppId){
