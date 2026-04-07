@@ -1144,44 +1144,44 @@ function renderResources() {
     },
   ];
 
-  let html = `<div class="mb-8"><h1 class="text-3xl font-black text-slate-900">📚 Resources & Support</h1><p class="text-slate-500 mt-2 font-medium">Singapore comprehensive guides, helplines, and dementia care services for caregivers.</p></div>`;
+  let html = `<div class="mb-6"><h1 class="text-2xl font-black text-slate-900 mb-1">📚 Resources & Support</h1><p class="text-slate-600 text-sm font-medium">Quick access to guides, helplines, and care services.</p></div>`;
 
   // ── EMERGENCY HELPLINES SECTION (prominent, user-friendly) ──
-  html += `<div class="mb-8"><div class="mb-4"><h2 class="text-xl font-black text-slate-900 mb-1">🚨 Emergency Helplines</h2><p class="text-slate-500 text-sm font-medium">Quick access to urgent care & support. Tap any number to call immediately.</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3">`;
+  html += `<div class="mb-6"><div class="mb-3"><h2 class="text-lg font-black text-slate-900 mb-1">🆘 Need Help Right Now?</h2><p class="text-slate-600 text-xs font-medium">Call immediately for urgent support.</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-2">`;
 
   emergency.forEach((item) => {
     const colorMap = {
       red: {
-        bg: "bg-red-50",
-        border: "border-red-200",
-        icon: "text-red-600",
-        phone: "text-red-700",
-        tag: "bg-red-100 text-red-700",
-        hover: "hover:bg-red-100",
+        bg: "bg-white",
+        border: "border-slate-200",
+        icon: "text-slate-400",
+        phone: "text-slate-900",
+        tag: "bg-slate-100 text-slate-600",
+        hover: "hover:shadow-md",
       },
       teal: {
-        bg: "bg-teal-50",
-        border: "border-teal-200",
-        icon: "text-teal-600",
-        phone: "text-teal-700",
-        tag: "bg-teal-100 text-teal-700",
-        hover: "hover:bg-teal-100",
+        bg: "bg-white",
+        border: "border-slate-200",
+        icon: "text-slate-400",
+        phone: "text-slate-900",
+        tag: "bg-slate-100 text-slate-600",
+        hover: "hover:shadow-md",
       },
       blue: {
-        bg: "bg-blue-50",
-        border: "border-blue-200",
-        icon: "text-blue-600",
-        phone: "text-blue-700",
-        tag: "bg-blue-100 text-blue-700",
-        hover: "hover:bg-blue-100",
+        bg: "bg-white",
+        border: "border-slate-200",
+        icon: "text-slate-400",
+        phone: "text-slate-900",
+        tag: "bg-slate-100 text-slate-600",
+        hover: "hover:shadow-md",
       },
       emerald: {
-        bg: "bg-emerald-50",
-        border: "border-emerald-200",
-        icon: "text-emerald-600",
-        phone: "text-emerald-700",
-        tag: "bg-emerald-100 text-emerald-700",
-        hover: "hover:bg-emerald-100",
+        bg: "bg-white",
+        border: "border-slate-200",
+        icon: "text-slate-400",
+        phone: "text-slate-900",
+        tag: "bg-slate-100 text-slate-600",
+        hover: "hover:shadow-md",
       },
     };
     const colors = colorMap[item.color];
@@ -1204,24 +1204,24 @@ function renderResources() {
         </div>
       </div>`;
   });
-  html += `</div></div>`;
+  html += `</div></div>`; // End emergency helplines
 
   // ── COLOR SCHEMES FOR SECTIONS ──
   const colorSchemes = {
-    purple: {bg: 'bg-purple-50', border: 'border-purple-200', icon: 'text-purple-600', link: 'text-purple-700', tag: 'bg-purple-100 text-purple-700', hover: 'hover:bg-purple-100', accent: 'text-purple-600'},
-    blue: {bg: 'bg-blue-50', border: 'border-blue-200', icon: 'text-blue-600', link: 'text-blue-700', tag: 'bg-blue-100 text-blue-700', hover: 'hover:bg-blue-100', accent: 'text-blue-600'},
-    orange: {bg: 'bg-orange-50', border: 'border-orange-200', icon: 'text-orange-600', link: 'text-orange-700', tag: 'bg-orange-100 text-orange-700', hover: 'hover:bg-orange-100', accent: 'text-orange-600'},
-    emerald: {bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'text-emerald-600', link: 'text-emerald-700', tag: 'bg-emerald-100 text-emerald-700', hover: 'hover:bg-emerald-100', accent: 'text-emerald-600'},
-    cyan: {bg: 'bg-cyan-50', border: 'border-cyan-200', icon: 'text-cyan-600', link: 'text-cyan-700', tag: 'bg-cyan-100 text-cyan-700', hover: 'hover:bg-cyan-100', accent: 'text-cyan-600'},
+    purple: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
+    blue: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
+    orange: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
+    emerald: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
+    cyan: {bg: 'bg-white', border: 'border-slate-200', icon: 'text-slate-400', link: 'text-teal-600', tag: 'bg-slate-100 text-slate-600', hover: 'hover:shadow-md', accent: 'text-slate-900'},
   };
 
   // ── TAB NAVIGATION ──
-  html += `<div class="mb-8">
-    <div class="flex flex-wrap gap-2 mb-6 pb-4 border-b-2 border-slate-200">
-      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'emergency' ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('emergency')">🆘 Quick Help</button>
-      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'cara' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('cara')">📱 CARA Platform</button>
-      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'dementiahub' ? 'bg-orange-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('dementiahub')">📚 DementiaHub</button>
-      <button class="px-4 py-2 rounded-lg font-bold text-sm transition ${resourceTab === 'dementiasgt' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" onclick="setResourceTab('dementiasgt')">🏥 Dementia SG</button>
+  html += `<div class="mb-4">
+    <div class="flex flex-wrap gap-2 mb-4 pb-3 border-b border-slate-200">
+      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'emergency' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('emergency')">🆘 Quick Help</button>
+      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'cara' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('cara')">📱 CARA</button>
+      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'dementiahub' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('dementiahub')">📚 DementiaHub</button>
+      <button class="px-3 py-1.5 rounded-lg font-bold text-xs transition ${resourceTab === 'dementiasgt' ? 'bg-teal-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}" onclick="setResourceTab('dementiasgt')">🏥 Services</button>
     </div>
   </div>`;
 
@@ -1230,30 +1230,24 @@ function renderResources() {
     // Quick Help Tab - Critical resources for immediate needs
     html += sections.slice(0, 3).map(sec => {
       const colors = colorSchemes[sec.color] || colorSchemes.purple;
-      return `<div class="mb-8">
-        <div class="mb-5 pb-4 border-b-2 ${colors.border}">
-          <h2 class="text-xl font-black ${colors.accent} mb-1">${sec.title}</h2>
-          <p class="text-slate-500 text-sm font-medium">${sec.desc}</p>
+      return `<div class="mb-4">
+        <div class="mb-3 pb-2 border-b border-slate-200">
+          <h2 class="text-base font-black text-slate-900 mb-0.5">${sec.title}</h2>
+          <p class="text-slate-600 text-xs font-medium">${sec.desc}</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           ${sec.items.map(item => {
             const urlDisplay = item.link.replace('https://', '').replace('http://', '').split('/')[0];
             return `
-            <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
-              <div class="flex items-start justify-between mb-3">
-                <span class="text-3xl">${item.icon}</span>
-                <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.tag}</span>
+            <div class="bg-white border-l-4 ${colors.border} p-3 rounded-lg transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="font-black text-slate-900 text-sm">${item.name}</h3>
+                <span class="text-xl">${item.icon}</span>
               </div>
-              <h3 class="font-black text-slate-800 mb-2 text-sm leading-snug">${item.name}</h3>
-              <p class="text-slate-500 text-xs leading-relaxed mb-3">${item.text}</p>
-              <div class="${colors.bg} rounded-lg p-3 mb-3 border ${colors.border}">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Details</p>
-                <p class="text-[10px] text-slate-600 font-semibold mb-1">${item.info}</p>
-                <p class="text-[10px] ${colors.link} font-bold truncate">↗ ${urlDisplay}</p>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold ${colors.link} group-hover:underline">Open →</span>
-                <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" title="Copy link" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
+              <p class="text-slate-600 text-xs mb-2">${item.text}</p>
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <span class="text-xs text-slate-500 font-semibold">${item.info}</span>
+                <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold transition">Copy</button>
               </div>
             </div>`;
           }).join('')}
@@ -1264,145 +1258,97 @@ function renderResources() {
   else if (resourceTab === 'cara') {
     // CARA Tab - Digital platform features
     html += `
-      <div class="mb-8">
-        <div class="mb-5 pb-4 border-b-2 border-blue-200">
-          <h2 class="text-2xl font-black text-blue-600 mb-2">📱 CARA — Digital Companion for Dementia Care</h2>
-          <p class="text-slate-600 text-sm font-medium">Free lifestyle and community platform by Dementia Singapore. Available on iOS and Android.</p>
+      <div class="mb-4">
+        <div class="mb-3 pb-2 border-b border-slate-200">
+          <h2 class="text-base font-black text-slate-900 mb-0.5">📱 CARA — Digital Companion</h2>
+          <p class="text-slate-600 text-xs font-medium">Free lifestyle and community platform by Dementia Singapore.</p>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div class="dh-card bg-blue-50 border-2 border-blue-200">
-            <h3 class="font-black text-blue-700 text-lg mb-3">🎯 About CARA</h3>
-            <p class="text-slate-700 text-sm mb-4">CARA is an initiative by Dementia Singapore, supported by NCSS and AIC. It provides easy access for persons living with dementia and caregivers to connect to an ecosystem of digital solutions and community support.</p>
-            <div class="space-y-2">
-              <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">✓ Free Membership</span>
-              <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full ml-2">✓ iOS & Android</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="bg-white border border-slate-200 p-3 rounded-lg">
+            <h3 class="font-black text-slate-900 text-sm mb-2">🎯 About CARA</h3>
+            <p class="text-slate-600 text-xs mb-3">Easy access to digital solutions and community support for dementia care.</p>
+            <div class="space-y-1">
+              <span class="inline-block bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded">✓ Free</span>
+              <span class="inline-block bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded ml-1">iOS & Android</span>
             </div>
           </div>
-          <div class="dh-card bg-cyan-50 border-2 border-cyan-200">
-            <h3 class="font-black text-cyan-700 text-lg mb-3">✨ Key Features</h3>
-            <ul class="text-sm text-slate-700 space-y-2">
-              <li>🛡️ <strong>Safe Return Program:</strong> Locate loved ones with dementia</li>
-              <li>👥 <strong>Community Alerts:</strong> Notify network immediately</li>
-              <li>🎁 <strong>Partner Rewards:</strong> Exclusive benefits from providers</li>
-              <li>📚 <strong>Resources Hub:</strong> Professional dementia information</li>
+          <div class="bg-white border border-slate-200 p-3 rounded-lg">
+            <h3 class="font-black text-slate-900 text-sm mb-2">✨ Features</h3>
+            <ul class="text-xs text-slate-600 space-y-1">
+              <li>🛡️ Safe Return Program</li>
+              <li>👥 Community Alerts</li>
+              <li>🎁 Partner Rewards</li>
             </ul>
           </div>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div class="dh-card border-2 border-blue-100 hover:border-blue-300 transition">
-            <h3 class="font-black text-slate-800 mb-3 text-base">🔍 Safe Return Program</h3>
-            <p class="text-slate-600 text-sm mb-3">Community-powered safety net. Get alerts if a loved one goes missing and help reunite other families through the CARA network.</p>
-            <button class="text-blue-600 font-bold text-sm hover:underline" onclick="openResourceLink('https://cara.sg/safe-return-guide/')">Learn More →</button>
-          </div>
-          <div class="dh-card border-2 border-blue-100 hover:border-blue-300 transition">
-            <h3 class="font-black text-slate-800 mb-3 text-base">🤝 Partners Program</h3>
-            <p class="text-slate-600 text-sm mb-3">Access exclusive rewards and offers from dementia-friendly businesses. Save money and make caregiving easier.</p>
-            <button class="text-blue-600 font-bold text-sm hover:underline" onclick="openResourceLink('https://cara.sg/partners/')">Explore Partners →</button>
-          </div>
-        </div>
-        
-        <div class="dh-card border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-6">
-          <h3 class="font-black text-blue-700 mb-3 text-lg">📲 Download CARA App Today</h3>
-          <p class="text-slate-700 text-sm mb-4">Join thousands of families in Singapore using CARA to stay connected and safe. Your membership is completely free.</p>
-          <div class="flex flex-wrap gap-3">
-            <button onclick="openResourceLink('https://play.google.com/store/apps/details?id=com.embreo.carasg')" class="bg-green-500 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-green-600 transition">📱 Google Play</button>
-            <button onclick="openResourceLink('https://apps.apple.com/sg/app/cara-sg/id1553855834')" class="bg-gray-900 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-gray-800 transition">🍎 App Store</button>
-            <button onclick="openResourceLink('https://cara.sg/join-now/')" class="bg-blue-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">🌐 Join Online</button>
+        <div class="mt-3 bg-white border border-slate-200 p-3 rounded-lg">
+          <h3 class="font-black text-slate-900 text-sm mb-2">📲 Get CARA Today</h3>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="openResourceLink('https://play.google.com/store/apps/details?id=com.embreo.carasg')" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:shadow-md transition font-bold">Google Play</button>
+            <button onclick="openResourceLink('https://apps.apple.com/sg/app/cara-sg/id1553855834')" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:shadow-md transition font-bold">App Store</button>
+            <button onclick="openResourceLink('https://cara.sg/join-now/')" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:shadow-md transition font-bold">Join Online</button>
           </div>
         </div>
       </div>`;
   }
   else if (resourceTab === 'dementiahub') {
-    // DementiaHub Tab - Portal for different user types
+    // DementiaHub Tab
     html += `
-      <div class="mb-8">
-        <div class="mb-5 pb-4 border-b-2 border-orange-200">
-          <h2 class="text-2xl font-black text-orange-600 mb-2">📚 DementiaHub — Singapore's Comprehensive Resource Portal</h2>
-          <p class="text-slate-600 text-sm font-medium">One-stop resource site with articles, guides, and practical advice. Browse by your role and situation:</p>
+      <div class="mb-4">
+        <div class="mb-3 pb-2 border-b border-slate-200">
+          <h2 class="text-base font-black text-slate-900 mb-0.5">📚 DementiaHub — Resource Portal</h2>
+          <p class="text-slate-600 text-xs font-medium">Guides and advice by your role</p>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/i-live-with-dementia/')">
-            <h3 class="font-black text-slate-800 mb-2 text-base">🧠 I Live with Dementia</h3>
-            <p class="text-slate-600 text-sm mb-3">Resources for persons living with dementia. Learn about stages, signs, self-advocacy, maintaining independence, and staying active in the community.</p>
-            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/i-live-with-dementia/')">
+            <h3 class="font-black text-slate-900 text-sm mb-1">🧠 Living with Dementia</h3>
+            <p class="text-slate-600 text-xs">Resources & support</p>
           </div>
-          
-          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/my-loved-one-has-dementia/')">
-            <h3 class="font-black text-slate-800 mb-2 text-base">❤️ My Loved One has Dementia</h3>
-            <p class="text-slate-600 text-sm mb-3">Comprehensive guides for family caregivers. Communication tips, daily care routines, handling difficult behaviors, and managing health.</p>
-            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/my-loved-one-has-dementia/')">
+            <h3 class="font-black text-slate-900 text-sm mb-1">❤️ Caregiver Guides</h3>
+            <p class="text-slate-600 text-xs">For family caregivers</p>
           </div>
-          
-          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/general-public/')">
-            <h3 class="font-black text-slate-800 mb-2 text-base">👫 I Want to Play a Part</h3>
-            <p class="text-slate-600 text-sm mb-3">For community members and volunteers. Learn how to create a dementia-inclusive environment and contribute to awareness.</p>
-            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/general-public/')">
+            <h3 class="font-black text-slate-900 text-sm mb-1">👫 Community</h3>
+            <p class="text-slate-600 text-xs">Volunteers & supporters</p>
           </div>
-          
-          <div class="dh-card border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/care-professional/')">
-            <h3 class="font-black text-slate-800 mb-2 text-base">👨‍⚕️ I am a Care Professional</h3>
-            <p class="text-slate-600 text-sm mb-3">For healthcare workers and care professionals. Clinical insights, best practices, and professional resources.</p>
-            <span class="text-orange-600 font-bold text-sm">Explore →</span>
+          <div class="bg-white border border-slate-200 p-3 rounded-lg hover:shadow-md transition cursor-pointer" onclick="openResourceLink('https://www.dementiahub.sg/care-professional/')">
+            <h3 class="font-black text-slate-900 text-sm mb-1">👨‍⚕️ Professionals</h3>
+            <p class="text-slate-600 text-xs">Healthcare workers</p>
           </div>
-        </div>
-        
-        <div class="dh-card border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
-          <h3 class="font-black text-slate-800 mb-3 text-base">💬 Professional Counselling for Caregivers</h3>
-          <p class="text-slate-600 text-sm mb-4">Emotional support matters. Professional counsellors provide guidance, coping strategies, and personalized support for caregivers at every stage of the journey.</p>
-          <button onclick="openResourceLink('https://www.dementiahub.sg/dementia/counselling-for-caregivers/')" class="bg-orange-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-orange-700 transition">Learn More →</button>
         </div>
       </div>`;
   }
   else if (resourceTab === 'dementiasgt') {
-    // Dementia Singapore Tab - Services directory and programs
+    // Dementia Singapore Services
+    html += `
+      <div class="mb-4">
+        <div class="mb-3 pb-2 border-b border-slate-200">
+          <h2 class="text-base font-black text-slate-900 mb-0.5">🏥 Dementia Singapore Services</h2>
+          <p class="text-slate-600 text-xs font-medium">Community support, care programs & resources</p>
+        </div>
+      </div>`;
+    
     html += sections.slice(3).map(sec => {
       const colors = colorSchemes[sec.color] || colorSchemes.emerald;
-      return `<div class="mb-8">
-        <div class="mb-5 pb-4 border-b-2 ${colors.border}">
-          <h2 class="text-xl font-black ${colors.accent} mb-1">${sec.title}</h2>
-          <p class="text-slate-500 text-sm font-medium">${sec.desc}</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      return `<div class="mb-3">
+        <h3 class="text-sm font-black text-slate-900 mb-2">${sec.title}</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           ${sec.items.map(item => {
-            const urlDisplay = item.link.replace('https://', '').replace('http://', '').split('/')[0];
             return `
-            <div class="dh-card ${colors.border} border-l-4 transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
-              <div class="flex items-start justify-between mb-3">
-                <span class="text-3xl">${item.icon}</span>
-                <span class="inline-block ${colors.tag} text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">${item.tag}</span>
-              </div>
-              <h3 class="font-black text-slate-800 mb-2 text-sm leading-snug">${item.name}</h3>
-              <p class="text-slate-500 text-xs leading-relaxed mb-3">${item.text}</p>
-              <div class="${colors.bg} rounded-lg p-3 mb-3 border ${colors.border}">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Details</p>
-                <p class="text-[10px] text-slate-600 font-semibold mb-1">${item.info}</p>
-                <p class="text-[10px] ${colors.link} font-bold truncate">↗ ${urlDisplay}</p>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold ${colors.link} group-hover:underline">Open →</span>
-                <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" title="Copy link" class="text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 font-semibold transition">📋 Copy</button>
-              </div>
+            <div class="bg-white border-l-4 ${colors.border} p-3 rounded-lg transition-all ${colors.hover} cursor-pointer group" onclick="openResourceLink('${esc(item.link)}')">
+              <h4 class="font-black text-slate-900 text-xs mb-1">${item.icon} ${item.name}</h4>
+              <p class="text-slate-600 text-xs mb-2">${item.text}</p>
+              <button onclick="event.stopPropagation(); copyToClipboard('${esc(item.link)}')" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Copy</button>
             </div>`;
           }).join('')}
         </div>
       </div>`;
     }).join('');
-    
-    html += `<div class="mt-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-200">
-      <h3 class="font-black text-emerald-900 mb-4 text-lg">🌍 About Dementia Singapore</h3>
-      <p class="text-slate-700 text-sm mb-4">Dementia Singapore (formerly Alzheimer's Disease Association) is Singapore's leading specialist Social Service Agency in dementia care. We're dedicated to creating a dementia-inclusive society through Care Innovation, Advocacy, and Empowerment.</p>
-      <div class="flex flex-wrap gap-3">
-        <button onclick="openResourceLink('https://dementia.org.sg/volunteer/')" class="bg-emerald-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-emerald-700 transition">✋ Volunteer</button>
-        <button onclick="openResourceLink('https://dementia.org.sg/donate/')" class="bg-red-500 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-red-600 transition">❤️ Donate</button>
-        <button onclick="openResourceLink('https://dementia.org.sg/vod/')" class="bg-blue-600 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">📰 Newsletter</button>
-      </div>
-    </div>`;
   }
   
   // ── CRISIS BANNER (shown in all tabs) ──
-  html += `<div class="mt-8 p-6 bg-gradient-to-r from-red-50 via-orange-50 to-red-50 rounded-2xl border-2 border-red-200"><div class="flex items-start gap-4"><div class="text-3xl mt-1">🆘</div><div class="flex-1"><h3 class="font-black text-red-900 text-lg mb-1">Life-Threatening or Immediate Crisis?</h3><p class="text-red-800 text-sm font-semibold mb-3">Don't wait — call 999 immediately. Every second counts.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div class="bg-white rounded-lg p-4 border border-red-200 cursor-pointer hover:bg-red-50 transition" onclick="openResourceLink('tel:999')"><p class="font-black text-red-700 text-2xl mb-1">🚑 999</p><p class="text-xs text-slate-500 font-semibold">Ambulance • Police • Fire</p></div><div class="bg-white rounded-lg p-4 border border-teal-200 cursor-pointer hover:bg-teal-50 transition" onclick="openResourceLink('tel:6377-0700')"><p class="font-black text-teal-700 text-lg mb-1">📞 6377 0700</p><p class="text-xs text-slate-500 font-semibold">Dementia Helpline • Mon-Fri 9-6pm</p></div></div></div></div></div>`;
+  html += `<div class="mt-4 p-4 bg-white rounded-lg border border-slate-200"><div class="flex items-start gap-3"><div class="text-2xl">🆘</div><div class="flex-1"><h3 class="font-black text-slate-900 text-sm mb-1">Life-Threatening or Immediate Crisis?</h3><p class="text-slate-700 text-xs font-semibold mb-3">Call 999 immediately. Every second counts.</p><div class="grid grid-cols-2 gap-2"><div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:shadow-md transition" onclick="openResourceLink('tel:999')"><p class="font-black text-slate-900 mb-0.5">🚑 999</p><p class="text-xs text-slate-500 font-semibold">Ambulance • Police • Fire</p></div><div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:shadow-md transition" onclick="openResourceLink('tel:6377-0700')"><p class="font-black text-slate-900 mb-0.5">📞 6377 0700</p><p class="text-xs text-slate-500 font-semibold">Dementia Helpline</p></div></div></div></div></div>`;
 
   return html;
 }
